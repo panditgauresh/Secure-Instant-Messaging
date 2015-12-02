@@ -1,0 +1,18 @@
+
+# TODO encrypt a mail
+# dest_pub_key_file = "keys/key_dest.pub"
+# sender_pri_key_file = "keys/key_sender"
+# mail_path = "emails/email_1.txt"
+# out_mail_path = "emails/email_1.enc"
+
+python fcrypt.py -e keys/key_dest.pub keys/key_sender emails/email_2.txt emails/email_2.enc
+
+
+
+# TODO decrypt a mail
+# sender_pub_key_file = "keys/key_sender.pub"
+# dest_pri_key_file = "keys/key_dest"
+# c_mail_path = "emails/email_1.enc"
+# out_mail_path = "emails/email_1_dec.txt"
+
+python fcrypt.py -d keys/key_dest keys/key_sender.pub emails/email_2.enc emails/email_2_dec.txt

@@ -1,0 +1,72 @@
+---> No arguments provided
+*** Encryption:  --> 
+usage: fcrypt.py [-h] (-e | -d) dest_key sender_key input output
+fcrypt.py: error: too few arguments
+*** Decryption:  --> 
+usage: fcrypt.py [-h] (-e | -d) dest_key sender_key input output
+fcrypt.py: error: too few arguments
+*** :( The encypted or decrypted file NOT FOUND
+---> Incorrect plaintext file provided
+*** Encryption: /home/fall15/Inc1.txt --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/cInc1.bin
+Traceback (most recent call last):
+  File "/home/fall15/Test/PS2/Sources/Jun_Cai/code/fcrypt.py", line 53, in <module>
+    main(opts.dest_key, opts.sender_key, opts.input, opts.output, opts.e)
+  File "/home/fall15/Test/PS2/Sources/Jun_Cai/code/fcrypt.py", line 15, in main
+    with open(input_path, "rb") as mail_file:
+IOError: [Errno 2] No such file or directory: '/home/fall15/Inc1.txt'
+*** Decryption: /home/fall15/Test/PS2/Sources/Jun_Cai/code/cInc1.bin --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/fInc1.txt
+Traceback (most recent call last):
+  File "/home/fall15/Test/PS2/Sources/Jun_Cai/code/fcrypt.py", line 53, in <module>
+    main(opts.dest_key, opts.sender_key, opts.input, opts.output, opts.e)
+  File "/home/fall15/Test/PS2/Sources/Jun_Cai/code/fcrypt.py", line 29, in main
+    with open(input_path, "rb") as c_mail_file:
+IOError: [Errno 2] No such file or directory: '/home/fall15/Test/PS2/Sources/Jun_Cai/code/cInc1.bin'
+*** :( The encypted or decrypted file NOT FOUND
+---> 1024b RSA keys switched
+*** Encryption: /home/fall15/f1.txt --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/cKS1.bin
+Fail to load the key!
+Fail to load the key!
+No key initiated. Please initiate class correctly.
+No key initiated. Please initiate class correctly.
+Encryption fail.
+*** Decryption: /home/fall15/Test/PS2/Sources/Jun_Cai/code/cKS1.bin --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/fKS1.txt
+Traceback (most recent call last):
+  File "/home/fall15/Test/PS2/Sources/Jun_Cai/code/fcrypt.py", line 53, in <module>
+    main(opts.dest_key, opts.sender_key, opts.input, opts.output, opts.e)
+  File "/home/fall15/Test/PS2/Sources/Jun_Cai/code/fcrypt.py", line 29, in main
+    with open(input_path, "rb") as c_mail_file:
+IOError: [Errno 2] No such file or directory: '/home/fall15/Test/PS2/Sources/Jun_Cai/code/cKS1.bin'
+*** :( The encypted or decrypted file NOT FOUND
+---> Send 1024b RSA key corrupted
+*** Encryption: /home/fall15/f1.txt --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/cSC1.bin
+*** Decryption: /home/fall15/Test/PS2/Sources/Jun_Cai/code/cSC1.bin --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/fSC1.txt
+Content corrupted!
+*** :( The original file and decrypted file DO NOT MATCH
+---> Dest 1024b RSA key corrupted
+*** Encryption: /home/fall15/f1.txt --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/cDC1.bin
+*** Decryption: /home/fall15/Test/PS2/Sources/Jun_Cai/code/cDC1.bin --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/fDC1.txt
+Decryption fail.
+*** :( The encypted or decrypted file NOT FOUND
+---> Both using 2048b RSA keys
+*** Encryption: /home/fall15/f1.txt --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/c21.bin
+*** Decryption: /home/fall15/Test/PS2/Sources/Jun_Cai/code/c21.bin --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/f21.txt
+*** \m/ The original file and decrypted file MATCH
+---> Both using 2048b RSA keys
+*** Encryption: /home/fall15/f3.mpeg --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/c23.bin
+*** Decryption: /home/fall15/Test/PS2/Sources/Jun_Cai/code/c23.bin --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/f23.mpeg
+*** \m/ The original file and decrypted file MATCH
+---> Both using 1024b RSA keys
+*** Encryption: /home/fall15/f2.gz --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/c12.bin
+*** Decryption: /home/fall15/Test/PS2/Sources/Jun_Cai/code/c12.bin --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/f12.gz
+Decryption fail.
+*** :( The encypted or decrypted file NOT FOUND
+---> Both using 1024b RSA keys
+*** Encryption: /home/fall15/f3.mpeg --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/c13.bin
+*** Decryption: /home/fall15/Test/PS2/Sources/Jun_Cai/code/c13.bin --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/f13.mpeg
+Decryption fail.
+*** :( The encypted or decrypted file NOT FOUND
+---> Send using 1024b, Dest using 2048b RSA keys
+*** Encryption: /home/fall15/f1.txt --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/c121.bin
+*** Decryption: /home/fall15/Test/PS2/Sources/Jun_Cai/code/c121.bin --> /home/fall15/Test/PS2/Sources/Jun_Cai/code/f121.txt
+Content corrupted!
+*** :( The original file and decrypted file DO NOT MATCH
