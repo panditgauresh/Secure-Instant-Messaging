@@ -3,10 +3,13 @@ import Consts as c
 import argparse
 import socket
 import datetime
-import random
-
+import os
+import Connection
 
 class ChatRequestHandler(SocketServer.BaseRequestHandler):
+
+	def genRandomNumber(self, bit_size):
+		return int(os.urandom(bit_size).encode('hex'),16)
 
 	def addTimeStamp(self,out_msg):
 		return str(out_msg) + datetime.datetime.now().strftime("%H:%M:%S:%f")
@@ -18,7 +21,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
 		return False
 
 	def addNonce(self,out_msg,addr,nonce_dict):
-		nonce_dict[addr] = random.randint(1,1<<64)
+		nonce_dict[addr] = self.genRandomNumber(8)
 		return str(out_msg) + "\n" + str(nonce_dict[addr])
 
 	def retrieveOrigMsg(self,out_msg):
@@ -55,7 +58,8 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
 		#recvNonce = self.verifyNonce(msg,self.client_address,nonce_dict)
 		#curr_msg = self.retrieveOrigMsg(msg)
         	if msg == c.GREETING:  # handling GREETING messages
-	            addr_set.add(self.client_address)
+		    addr_set[self.client_address] = Connection.Connection(self.client_address)#ra.getChallengeTupple()
+	            #addr_set.add(self.client_address)
         	else:  # handling INCOMING messages
 	            if msg.startswith(c.MSG_HEAD) and self.client_address in addr_set:
         	        addr_str = self.client_address[0] + ':' + \
@@ -100,7 +104,7 @@ def run_server(port):
         serv.server_close()
 
 if __name__ == '__main__':
-    addr_set = set()
+    addr_set = {}
     nonce_dict = {}
     parser = argparse.ArgumentParser()
     parser.add_argument('-sp', required=True, type=int)
