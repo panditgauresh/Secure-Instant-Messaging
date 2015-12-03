@@ -1,6 +1,6 @@
 import ChallengeComm
 
-class RequestAuthority(self):
+class RequestAuthority():
 	def __init__(self):
 		self.challengeComm = ChallengeComm.ChallengeComm()
 	def getChallengeTupple():
