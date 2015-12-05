@@ -11,3 +11,7 @@ FAIL_SRV_INIT = 'Failed to initialize server. Maybe the port is in use.'
 SRV_START = 'Server Initialized...'
 FAIL_SRV_START = 'Failed to start server.'
 FAIL_MSG_FWD = 'Failed to forward message.'
+
+DF_PRIME_SIZE = 2048
+DF_KEY_SIZE = 512
+DF_GENERATOR_INDEX = 0
