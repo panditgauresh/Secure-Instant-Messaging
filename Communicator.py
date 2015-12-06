@@ -3,7 +3,7 @@ class Comm():
 		pass
 
 	def getResponse(self, message):
-		msgType = getMessageType(message)
+		msgType = self.getMessageType(message)
 		if(msgType == 'List'):
 			pass
 		elif(msgType == 'Chat'):

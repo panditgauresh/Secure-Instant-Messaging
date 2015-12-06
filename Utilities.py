@@ -1,6 +1,7 @@
 import pickle
 import os.path as path
 import os
+import datetime
 
 def load_pickle_file(path):
     """
@@ -54,9 +55,45 @@ def load_df_param_from_file(path):
     """
     with open(path, 'r') as f:
         prime_str = f.read().replace('\n', '')
-    print prime_str
+    return int(prime_str.encode('hex'), 16)
+
+def add_time_stamp(out_msg):
+    return str(out_msg) + datetime.datetime.now().strftime("%H:%M:%S:%f")
+
+def isValidTimeStamp(message, indexOfMessage):
+    timestamp = message.rsplit('\n',1)[1]
+    recvTime = datetime.datetime.strptime(timestamp,"%H:%M:%S:%f")
+    timeNow = datetime.datetime.now().strptime(timestamp,"%H:%M:%S:%f")
+    print(message)
+    print("timestamp")
+    print(timeNow)
+    print(recvTime)
+    diff = timeNow - recvTime
+    print(diff)
+    #if(diff.days == 0 and diff.hours == 0 and diff.minutes == 0 and diff.seconds == 0):
+    #  if(abs(diff.microseconds) < 500):
+    if(diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=200)):
+        return True
+        #print(diff.strftime("%H:%M:%S:%f"))
+    print(diff)
+    return False
+
+def verifyNonce(msg,addr,nonce_dict):
+    nonce = msg.rsplit('\n', 1)[1]
+    if(nonce_dict[addr] == nonce):
+        return True
+    return False
+
+def addNonce(out_msg,addr,nonce_dict):
+    nonce_dict[addr] = util.get_rand(8)
+    return str(out_msg) + "\n" + str(nonce_dict[addr])
+
+def retrieveOrigMsg(out_msg):
+    out_msg = out_msg.rsplit('\n',1)[0]
+    print("out Message:"+str(out_msg))
+    return out_msg
 
 
 if __name__ == '__main__':
     path = 'files/df_param'
-    load_df_param_from_file(path)
+    print load_df_param_from_file(path)

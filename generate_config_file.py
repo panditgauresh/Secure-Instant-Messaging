@@ -22,6 +22,23 @@ def generate_DF_param_file(path):
     util.save(path, param)
 
 
+def generate_and_save_config_file(path):
+    """
+
+    :param path:
+    :return:
+    """
+
+    # get parameters for DH
+    df_path = 'files/df_param'
+    prime = util.load_df_param_from_file(df_path)
+    g = 2
+    df_param = (g, prime)
+
+    # get user dict
+    user_dict = {}
+    # TODO generate user/password hashed and salt
+
 
 
 if __name__ == '__main__':

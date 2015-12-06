@@ -4,83 +4,43 @@ import argparse
 import socket
 import datetime
 import os
-import Connection
+import Utilities as util
+import Authentication
 
+
+nonce_dict = {}
+auth_dict = {}
+g = 0
+p = 0
 
 class ChatRequestHandler(SocketServer.BaseRequestHandler):
 
-    def genRandomNumber(self, bit_size):
-        return int(os.urandom(bit_size).encode('hex'), 16)
-
-    def addTimeStamp(self,out_msg):
-        return str(out_msg) + datetime.datetime.now().strftime("%H:%M:%S:%f")
-
-    def verifyNonce(self,msg,addr,nonce_dict):
-        nonce = msg.rsplit('\n', 1)[1]
-        if(nonce_dict[addr] == nonce):
-            return True
-        return False
-
-    def addNonce(self,out_msg,addr,nonce_dict):
-        nonce_dict[addr] = self.genRandomNumber(8)
-        return str(out_msg) + "\n" + str(nonce_dict[addr])
-
-    def retrieveOrigMsg(self,out_msg):
-        out_msg = out_msg.rsplit('\n',1)[0]
-        print("out Message:"+str(out_msg))
-        return out_msg
-
-    def isValidTimeStamp(self,message, indexOfMessage):
-        timestamp = message.rsplit('\n',1)[1]
-        recvTime = datetime.datetime.strptime(timestamp,"%H:%M:%S:%f")
-        timeNow = datetime.datetime.now().strptime(timestamp,"%H:%M:%S:%f")
-        print(message)
-        print("timestamp")
-        print(timeNow)
-        print(recvTime)
-        diff = timeNow - recvTime
-        print(diff)
-        #if(diff.days == 0 and diff.hours == 0 and diff.minutes == 0 and diff.seconds == 0):
-        #  if(abs(diff.microseconds) < 500):
-        if(diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=200)):
-            return True
-            #print(diff.strftime("%H:%M:%S:%f"))
-        print(diff)
-        return False
-
     def handle(self):
         '''
-        When seeing GREETING message, add the address to the set.
-        When seeing INCOMING message, forward to all the subscribed clients.
+        Perform packet handling logic
         '''
-        global addr_set
-        global nonce_dict
+        global auth_dict, g, p, nonce_dict
         msg = self.request[0]
-        #recvNonce = self.verifyNonce(msg,self.client_address,nonce_dict)
-        #curr_msg = self.retrieveOrigMsg(msg)
-        if msg == c.GREETING:  # handling GREETING messages
-            conn = Connection.Connection(self.client_address)
-            addr_set[self.client_address] = conn
-            out_msg = conn.processRequest() 
-            #addr_set.add(self.client_address)
-        else:  # handling INCOMING messages
-            if msg.startswith(c.MSG_HEAD) and self.client_address in addr_set:
-                addr_str = self.client_address[0] + ':' + \
-                           str(self.client_address[1])
-                out_msg = c.FWD_MSG.format(c.MSG_HEAD, addr_str, msg[2:])
-                print(msg[2:]+' and '+msg)
-                out_msg = self.retrieveOrigMsg(out_msg)
-                if(self.isValidTimeStamp(msg[2:],0)):
-                  sock = self.request[1]
-                  for addr in addr_set:
-                    try:
-                        nonceMsg = self.addNonce(self.addTimeStamp(out_msg),addr,nonce_dict)
-                        sock.sendto(nonceMsg , addr)
-                    except socket.error:
-                        print c.FAIL_MSG_FWD
-                        return
-                else:
-                  print("Timestamp is Invalid")
+        sock = self.request[1]
+
+        # get auth instance for client
+        if self.client_address not in auth_dict:
+            # new client, create an auth entry in the auth dictionary
+            auth_dict[self.client_address] = Authentication.Authentication(self.client_address, p, g)
+        cur_auth = auth_dict[self.client_address]
+        assert isinstance(cur_auth, Authentication.Authentication)
+        # TODO handle request, do the timestamp and nonce in handler class
+        if not cur_auth.is_auth():
+            rep = cur_auth.process_request(msg)
+        else:
+            rep = None  # TODO get reponse for keep-alive, list, chat and logout
+            rep = rep # TODO encrypted response
+
+        try:
+            sock.sendto(rep, self.client_address)
+        except socket.error:
+            print c.FAIL_MSG_FWD
+            return
 
 
 def run_server(port):
@@ -107,8 +67,8 @@ def run_server(port):
         serv.server_close()
 
 if __name__ == '__main__':
-    addr_set = {}
-    nonce_dict = {}
+    # addr_set = {}
+    # nonce_dict = {}
     parser = argparse.ArgumentParser()
     parser.add_argument('-sp', required=True, type=int)
     opts = parser.parse_args()

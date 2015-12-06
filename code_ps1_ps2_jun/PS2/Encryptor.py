@@ -7,9 +7,6 @@ import Consts as c
 
 
 class Encryptor():
-    dest_pub_key = None
-    private_key = None
-
 
     def __init__(self, d_pub_k_path, private_k_path):
         '''
