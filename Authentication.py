@@ -15,7 +15,7 @@ class Authentication():
 
     def __init__(self, addr, p, g):
         self.addr = addr
-        self.timestamp = time.strptime(time.time(),"%H:%M:%S:%f")
+        self.timestamp = time.time()
         self.dh = DH.DiffieHellman(p, g)
         self.ra = RequestAuthority.RequestAuthority()
         self.stage = 0
@@ -24,9 +24,10 @@ class Authentication():
         pass
 
     def process_request(self,request):
-        pass
+        return "{} back!".format(request)
 
     def is_auth(self):
+        print('Auth stage: {}'.format(self.stage))
         return self.stage == 3
 
 
