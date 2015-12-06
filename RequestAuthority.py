@@ -10,3 +10,4 @@ class RequestAuthority():
 
 	def getMaskSize(self):
 		return 17
+

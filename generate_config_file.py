@@ -18,7 +18,7 @@ def generate_DF_param_file(path):
     :param path:
     :return:
     """
-    param = (generator_list[c.DF_GENERATOR_INDEX], get_prime(c.DF_PRIME_SIZE))
+    param = (generator_list[c.DH_GENERATOR_INDEX], get_prime(c.DH_PRIME_SIZE))
     util.save(path, param)
 
 

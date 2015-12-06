@@ -1,3 +1,6 @@
+# code reference: https://github.com/lowazo/pyDHE/blob/master/DiffieHellman.py
+
+
 import Utilities as util
 import Consts as c
 
@@ -5,7 +8,7 @@ class DiffieHellman(object):
     """
 
     """
-    def __init__(self, p, g, key_length=c.DF_KEY_SIZE):
+    def __init__(self, p, g, key_length=c.DH_KEY_SIZE):
         """
 
         :param key_path: the path of the DH key public parameters (g, p)
@@ -14,9 +17,21 @@ class DiffieHellman(object):
         """
         self.generator = g
         self.prime = p
-        self.private_key = self._generate_private_key(key_length)
-        self.public_key = self._generate_public_key()
+        self.key_length = key_length
+        self.private_key = 0
+        self.public_key = 0
         self.secret = None
+
+    def feed_other_public_key(self, other_pub_k):
+        """
+
+        :param other_pub_k:
+        :return:
+        """
+        self.private_key = self._generate_private_key(self.key_length)
+        self.public_key = self._generate_public_key()
+        self._compute_secret(other_pub_k)
+        return self.secret
 
     def _generate_private_key(self, bits):
         """
@@ -34,7 +49,7 @@ class DiffieHellman(object):
         """
         return pow(self.generator, self.private_key, self.prime)
 
-    def compute_secret(self, other_public_key):
+    def _compute_secret(self, other_public_key):
         """
         other_public_key ** private_key % prime
         :param other_public_key:
@@ -51,4 +66,3 @@ class DiffieHellman(object):
         return self.secret
 
 
-# code reference: https://github.com/lowazo/pyDHE/blob/master/DiffieHellman.py

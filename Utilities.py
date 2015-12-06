@@ -46,7 +46,6 @@ def load_config_file(path):
     dh_param, user_cred_dict = config
     return dh_param, user_cred_dict
 
-
 def load_df_param_from_file(path):
     """
 
@@ -85,7 +84,7 @@ def verifyNonce(msg,addr,nonce_dict):
     return False
 
 def addNonce(out_msg,addr,nonce_dict):
-    nonce_dict[addr] = util.get_rand(8)
+    nonce_dict[addr] = get_rand(8)
     return str(out_msg) + "\n" + str(nonce_dict[addr])
 
 def retrieveOrigMsg(out_msg):

@@ -83,5 +83,5 @@ class PublicKeyUtil():
 
 
 if __name__ == '__main__':
-    PrivateKeyUtil.generate_keys('keys/key_sender')
-    PrivateKeyUtil.generate_keys('keys/key_dest')
+    # PrivateKeyUtil.generate_keys('keys/key_sender')
+    PrivateKeyUtil.generate_keys('keys/key_server', key_size=4096)
