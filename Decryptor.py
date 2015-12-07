@@ -65,4 +65,4 @@ class Decryptor():
         return iv
 
     def rsa_sign(self, msg):
-        self.private_key.sign(msg)
+        return self.private_key.sign(msg)
