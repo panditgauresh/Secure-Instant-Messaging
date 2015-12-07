@@ -5,10 +5,10 @@ import Consts
 import argparse
 import datetime
 import Utilities as util
-import CryptoService
+from CryptoService import CryptoService
 from FakeCryptoService import FakeCryptoService
 from ClientAuthentication import ClientAuthentication
-
+import Consts as c
 
 client_auth = None
 
@@ -60,12 +60,12 @@ def run_client(server_ip, server_port):
     global client_auth
     g = 2
     p = util.load_df_param_from_file("files/df_param")
-    # crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
-    crypto_service = FakeCryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)   # TODO for test
+    crypto_service = CryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)
+    # crypto_service = FakeCryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)   # TODO for test
 
     server_addr = (server_ip, server_port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    client_port = server_port
+    client_port = server_port + 1
     local_ip = socket.gethostbyname(socket.gethostname())
     client_addr = (local_ip, client_port)
 
@@ -114,8 +114,9 @@ def run_client(server_ip, server_port):
         sock.close()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-sip', required=True)
-    parser.add_argument('-sp', required=True, type=int)
-    opts = parser.parse_args()
-    run_client(opts.sip, opts.sp)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('-sip', required=True)
+    # parser.add_argument('-sp', required=True, type=int)
+    # opts = parser.parse_args()
+    # run_client(opts.sip, opts.sp)
+    run_client('192.168.1.175', 9090)

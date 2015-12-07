@@ -18,10 +18,13 @@ FAIL_MSG_FWD = 'Failed to forward message.'
 
 PUB_KEY_PATH = 'keys/key_server.pub'
 PRI_KEY_PATH = 'keys/key_server'
+P_TEXT_LEN_4096 = 470
+C_TEXT_LEN_4096 = 512
 
 DH_PRIME_SIZE = 2048
 DH_KEY_SIZE = 512
 DH_GENERATOR_INDEX = 0
+
 
 SYM_KEY_LENGTH = 32
 IV_LENGTH = 16

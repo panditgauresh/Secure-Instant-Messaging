@@ -19,35 +19,16 @@ class Encryptor():
 
     def rsa_encrypt(self, p_text):
         # TODO need to rewrite
-        # padding
-        padder = padding.PKCS7(128).padder()
-        padded_data = padder.update(p_text)
-        padded_data += padder.finalize()
+        if len(p_text) > c.P_TEXT_LEN_4096:
+            p_text_1 = p_text[:c.P_TEXT_LEN_4096]
+            p_text_2 = p_text[c.P_TEXT_LEN_4096:]
+            c_text_1 = self.dest_pub_key.encrypt(p_text_1)
+            c_text_2 = self.dest_pub_key.encrypt(p_text_2)
+            c_text = c_text_1 + c_text_2
+        else:
+            c_text = self.dest_pub_key.encrypt(p_text)
 
-        # generate sym_key
-        # encrypt with sym_key
-        sym_key = os.urandom(c.SYM_KEY_LENGTH)
-        iv = os.urandom(c.IV_LENGTH)
-        cipher = Cipher(algorithms.AES(sym_key), modes.CBC(iv), backend=default_backend())
-        encryptor = cipher.encryptor()
-        cipher_text = encryptor.update(padded_data) + encryptor.finalize()
-
-        # generate digest for the cipher text with HMAC
-        # key = os.urandom(32)
-        # h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        # h.update(b"data")
-        # sign = h.finalize()
-
-        # encrypt header with public key
-        encrypted_sym_key = self.dest_pub_key.encrypt(sym_key)
-
-        # concate header: sym_key + iv + digest
-        header = encrypted_sym_key + iv
-
-        # concate encrypt header + cipher text
-        whole_msg = header + cipher_text
-
-        return whole_msg
+        return c_text
 
     def rsa_verify(self, msg, sign):
         return self.dest_pub_key.verify(msg, sign)
@@ -80,3 +61,9 @@ class Encryptor():
         whole_msg = header + cipher_text
 
         return whole_msg
+
+if __name__ == '__main__':
+    enc = Encryptor(c.PUB_KEY_PATH)
+    p_text = os.urandom(877)
+    c_text = enc.rsa_encrypt(p_text)
+    print(len(c_text))

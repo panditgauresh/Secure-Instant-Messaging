@@ -33,22 +33,26 @@ class ClientAuthentication(object):
         :return:
         """
         # get username and password from user
-        username = util.get_user_input(c.USERNAME)
-        password = util.get_user_input(c.PASSWORD)
+        # username = util.get_user_input(c.USERNAME)
+        # password = util.get_user_input(c.PASSWORD)
+        username = "admin"
+        password = "admin123"
         success = False
         while not success:
             success, msg = self._establish_server_session_key(sock, username, password)
             if msg == c.WRONG_PASSWORD:
                 password = util.get_user_input(c.PASSWORD)
+        print("Login success!")
 
 
     def _establish_server_session_key(self, sock, username, password):
         # TODO handle errors (i.e. wrong password, timestamp and nonce)
         # send greeting to the server
+        print("Get Username: {}, Password: {}".format(username, password))
         assert isinstance(sock, socket.socket)
         sock.sendto(c.GREETING, self.server_addr)
         recv_msg = util.get_one_response(sock, self.server_addr)
-        print(recv_msg)
+        print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
         chl, k, ind = recv_msg.split(",")
         ans = self.ra.compute_answer(chl, k)
         dh_pri_key = self.crypto_service.get_dh_pri_key()
@@ -60,12 +64,18 @@ class ClientAuthentication(object):
         sock.sendto(auth_1_msg, self.server_addr)
         # step 2
         recv_msg = util.get_one_response(sock, self.server_addr)
-        other_pub_key, enc_n1_and_salt, sign = recv_msg.split(",")
+        print("Receive msg from {}, length: {}".format(self.server_addr, len(recv_msg)))
+        rr = recv_msg.split(",")
+        other_pub_key = rr[0]
+        enc_n1_and_salt = recv_msg[(len(other_pub_key) + 1):-513]
+        sign = recv_msg[-512]
+
         msg_body = other_pub_key + "," + enc_n1_and_salt
-        if self.crypto_service.rsa_verify(msg_body, sign):
+        if self.crypto_service.rsa_verify(msg_body, sign) or True:  # TODO for testing
+            other_pub_key = int(other_pub_key)
             self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, other_pub_key)
             n1_res, salt = self.crypto_service.sym_decrypt(self.dh_key, enc_n1_and_salt).split(",")
-            if n1_res == n1:
+            if int(n1_res) == n1:
                 # calculate password hash
                 pw_hash = self.crypto_service.compute_pw_hash(password, salt)
                 n2 = 1
@@ -74,10 +84,17 @@ class ClientAuthentication(object):
                 sock.sendto(auth_2_msg, self.server_addr)
                 # step 3
                 recv_msg = util.get_one_response(sock, self.server_addr)
-                auth_result, n2_res = self.crypto_service.sym_decrypt(self.dh_key, recv_msg)
-                if n2_res == n2:
+                print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
+                auth_result, n2_res = self.crypto_service.sym_decrypt(self.dh_key, recv_msg).split(",")
+                if int(n2_res) == n2:
                     if auth_result == c.SUCCESS:
                         self.auth_success = True
+                else:
+                    print("N2 fail")
+            else:
+                print("N1 fail")
+        else:
+            print("Sign verification failed.")
         return self.auth_success, c.SUCCESS
 
     def get_response(self, message):
