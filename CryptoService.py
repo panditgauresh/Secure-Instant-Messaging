@@ -20,6 +20,7 @@ class CryptoService(object):
         return self.dh.generate_public_key(private_key)
 
     def get_dh_secret(self, private_key, other_public_key):
+        # TODO verify the other_public_key
         return self.dh.compute_secret(private_key, other_public_key)
 
     def sym_encrypt(self, secret, p_text):
