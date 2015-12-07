@@ -10,6 +10,7 @@ from CryptoService import CryptoService
 nonce_dict = {}
 auth_dict = {}
 crypto_service = None
+password_hash_dict = {}
 
 class ChatRequestHandler(SocketServer.BaseRequestHandler):
 
@@ -49,11 +50,11 @@ def run_server(port):
     Main function to run the server.
     '''
     # load config file for DH and username/password
-    global crypto_service
+    global crypto_service, password_hash_dict
     g = 2
-    p = util.load_df_param_from_file('files/df_param')
+    p = util.load_df_param_from_file("files/df_param")
     crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
-
+    password_hash_dict = util.load_pickle_file("files/")
     try:
         local_ip = socket.gethostbyname(socket.gethostname())
         print('Binding to ip: {}'.format(local_ip))

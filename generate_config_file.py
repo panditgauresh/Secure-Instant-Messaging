@@ -5,6 +5,7 @@ import ssl
 import os
 import Consts as c
 import Utilities as util
+import hashlib
 
 generator_list = [2, 3, 5, 7]
 
@@ -39,8 +40,18 @@ def generate_and_save_config_file(path):
     user_dict = {}
     # TODO generate user/password hashed and salt
 
+def generate_password_hash_dict(path):
+    pw_dict = {"user1" : "CS6740",
+               "user2" : "cs6740",
+               "admin" : "admin123"}
+    pw_hash_dict = {}
+    for u in pw_dict:
+        salt = os.urandom(6)
+        pw_hash_dict[u] = (hashlib.sha256(pw_dict[u] + salt).hexdigest(), salt)
 
+    util.save(path, pw_hash_dict)
 
 if __name__ == '__main__':
-    pass
+    pw_path = "files/pw_hash_dict"
+    generate_password_hash_dict(pw_path)
 
