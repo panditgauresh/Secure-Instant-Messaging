@@ -1,4 +1,5 @@
 GREETING = 'HELLO'
+SUCCESS = 'SUCCESS'
 MSG_HEAD = '#*'
 PROMPT = '+> '
 TERM_MSG = "Terminating the client ... (press ENTER if it's hanging) "

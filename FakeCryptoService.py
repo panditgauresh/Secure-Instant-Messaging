@@ -5,12 +5,10 @@ Combine rsa, DH, aes
 from DHService import DiffieHellman
 from Encryptor import Encryptor
 from Decryptor import Decryptor
+from CryptoService import CryptoService
 
-class CryptoService(object):
-    def __init__(self, rsa_pub_path=None, rsa_pri_path=None, p=None, g=None):
-        self.dh = DiffieHellman(p, g) if p is not None and g is not None else None
-        self.encryptor = Encryptor(rsa_pub_path)
-        self.decryptor = Decryptor(rsa_pri_path)
+class FakeCryptoService(CryptoService):
+    # for testing use
 
     def get_dh_pri_key(self):
         return self.dh.generate_private_key()

@@ -53,5 +53,7 @@ def generate_password_hash_dict(path):
 
 if __name__ == '__main__':
     pw_path = "files/pw_hash_dict"
-    generate_password_hash_dict(pw_path)
+    # generate_password_hash_dict(pw_path)
+    d = util.load_pickle_file(pw_path)
+    print(d["admin"])
 

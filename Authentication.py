@@ -2,6 +2,7 @@ import RequestAuthority
 import time
 from CryptoService import CryptoService
 import Utilities as util
+import Consts as c
 
 
 class Authentication():
@@ -13,7 +14,7 @@ class Authentication():
         3 : auth success
     """
 
-    def __init__(self, addr, crypto_service):
+    def __init__(self, addr, crypto_service, pw_dict):
         assert isinstance(crypto_service, CryptoService)
         self.crypto_service = crypto_service
         self.addr = addr
@@ -22,6 +23,7 @@ class Authentication():
         self.stage = 0
         self.dh_key = 0
         self.username = ""
+        self.pw_dict = pw_dict
 
     def get_response(self, message):
         pass
@@ -34,9 +36,9 @@ class Authentication():
         """
         if self.stage == 0:
             # sent a challenge to client
-            c, ind, k = self.ra.getChallengeTupple()
+            chl, ind, k = self.ra.getChallengeTupple()
             self.stage = 1
-            return util.format_message(c, k, ind)
+            return util.format_message(chl, k, ind)
         elif self.stage == 1:
             # check the challenge answer, decrypt the client DH public key and send DH public key back
             try:
@@ -68,8 +70,10 @@ class Authentication():
         elif self.stage == 2:
             # decrypt the message and check the password hash
             pw_hash, n = self.crypto_service.sym_decrypt(self.dh_key, request).split(',')
+            if pw_hash != self.pw_dict[self.username][0]:
+                return "WRONG PASSWORD"
             self.stage = 3
-            pass
+            return c.SUCCESS
 
 
     def is_auth(self):

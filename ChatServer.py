@@ -18,7 +18,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         '''
         Perform packet handling logic
         '''
-        global auth_dict, nonce_dict, crypto_service
+        global auth_dict, nonce_dict, crypto_service, password_hash_dict
         msg = self.request[0]
         sock = self.request[1]
         print('Message received from {}: {}'.format(self.client_address, msg))
@@ -27,7 +27,8 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
             if msg != c.GREETING:
                 return
             # new client, create an auth entry in the auth dictionary
-            auth_dict[self.client_address] = Authentication.Authentication(self.client_address, crypto_service)
+            auth_dict[self.client_address] = Authentication.Authentication(self.client_address, crypto_service,
+                                                                           password_hash_dict)
         cur_auth = auth_dict[self.client_address]
         assert isinstance(cur_auth, Authentication.Authentication)
         # TODO handle request, do the timestamp and nonce in handler class
@@ -54,7 +55,7 @@ def run_server(port):
     g = 2
     p = util.load_df_param_from_file("files/df_param")
     crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
-    password_hash_dict = util.load_pickle_file("files/")
+    password_hash_dict = util.load_pickle_file("files/pw_hash_dict")
     try:
         local_ip = socket.gethostbyname(socket.gethostname())
         print('Binding to ip: {}'.format(local_ip))
