@@ -42,5 +42,5 @@ class DiffieHellman(object):
         :return:
         """
         secret = pow(other_public_key, private_key, self.prime)
-        key = hashlib.sha256(str(secret)).hexdigest()
+        key = hashlib.sha256(str(secret)).digest()
         return key
