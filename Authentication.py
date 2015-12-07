@@ -50,7 +50,7 @@ class Authentication():
             k = self.ra.getMaskSize()  # TODO flaw when mask size changed
             if self.ra.challengeComm.isChallengeMatched(k, ind, c_ans) or True:  # TODO for testing
                 # dec_dh_pub_client, username, n1 = self.crypto_service.rsa_decrypt(enc_client_msg).split(",")  # TODO decryption, get N1, public key,
-                dec_dh_pub_client, self.username, n1 = 321321321321321, "joncai", "321"  # TODO for testing
+                dec_dh_pub_client, self.username, n1 = 321321321321321, "admin", "321"  # TODO for testing
                 n1 = int(n1)
                 dec_dh_pub_client = int(dec_dh_pub_client)
                 print("Seen DH public key: {}, Username: {}, n1: {}".format(dec_dh_pub_client, self.username, n1))
@@ -73,6 +73,7 @@ class Authentication():
             if pw_hash != self.pw_dict[self.username][0]:
                 return "WRONG PASSWORD"
             self.stage = 3
+            print("Authentication success.")
             return c.SUCCESS
 
 

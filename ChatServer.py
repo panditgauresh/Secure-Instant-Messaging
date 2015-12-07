@@ -6,6 +6,7 @@ import os
 import Utilities as util
 import Authentication
 from CryptoService import CryptoService
+from FakeCryptoService import FakeCryptoService
 
 nonce_dict = {}
 auth_dict = {}
@@ -54,8 +55,11 @@ def run_server(port):
     global crypto_service, password_hash_dict
     g = 2
     p = util.load_df_param_from_file("files/df_param")
-    crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
-    password_hash_dict = util.load_pickle_file("files/pw_hash_dict")
+    # crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
+    crypto_service = FakeCryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)   # TODO for test
+
+    pw_dict_path = "files/pw_hash_dict"
+    password_hash_dict = util.load_pickle_file(pw_dict_path)
     try:
         local_ip = socket.gethostbyname(socket.gethostname())
         print('Binding to ip: {}'.format(local_ip))
