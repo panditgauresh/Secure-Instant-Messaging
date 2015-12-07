@@ -2,6 +2,9 @@ import pickle
 import os.path
 import os
 import datetime
+import sys
+import socket
+
 
 def load_pickle_file(path):
     """
@@ -97,6 +100,22 @@ def format_message(*args):
     for a in args:
         res += str(a) + ","
     return res[:-1]
+
+def get_one_response(sock, addr):
+    assert  isinstance(sock, socket.socket)
+    recv_msg = None
+    while True:
+        # listening to the server and display the message
+        recv_msg, r_addr = sock.recvfrom(1024)
+        if r_addr == addr and recv_msg:
+            break
+    return recv_msg
+
+def get_user_input(prompt):
+    sys.stdout.write(c.USERNAME)
+    sys.stdout.flush()
+    return sys.stdin.readline()
+
 
 
 if __name__ == '__main__':

@@ -4,6 +4,14 @@ import threading
 import Consts
 import argparse
 import datetime
+import Utilities as util
+import CryptoService
+from FakeCryptoService import FakeCryptoService
+from ClientAuthentication import ClientAuthentication
+
+
+client_auth = None
+
 
 class ListenThread (threading.Thread):
 
@@ -49,6 +57,12 @@ def run_client(server_ip, server_port):
     server_ip: IP address of the server
     server_port: port number which server uses to communicate
     '''
+    global client_auth
+    g = 2
+    p = util.load_df_param_from_file("files/df_param")
+    # crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
+    crypto_service = FakeCryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)   # TODO for test
+
     server_addr = (server_ip, server_port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_port = server_port
@@ -65,8 +79,11 @@ def run_client(server_ip, server_port):
             client_addr = (client_addr[0], client_addr[1] + 1)
             continue
 
+    client_auth = ClientAuthentication(client_addr, server_addr, crypto_service)
+
+
     try:
-        sock.sendto(Consts.GREETING, server_addr)
+        client_auth.start_authentication(sock)
     except socket.error:
         print Consts.FAIL_GRE_MSG
         return

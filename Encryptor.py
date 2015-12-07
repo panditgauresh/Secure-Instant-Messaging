@@ -49,6 +49,9 @@ class Encryptor():
 
         return whole_msg
 
+    def rsa_verify(self, msg, sign):
+        return self.dest_pub_key.verify(msg, sign)
+
     def sym_encrypt(self, secret, p_text):
 
         # padding

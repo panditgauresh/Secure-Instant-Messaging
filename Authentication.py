@@ -5,7 +5,7 @@ import Utilities as util
 import Consts as c
 
 
-class Authentication():
+class Authentication(object):
     """
     Stages:
         0 : hello
@@ -80,5 +80,3 @@ class Authentication():
     def is_auth(self):
         print('Auth stage: {}'.format(self.stage))
         return self.stage == 3
-
-

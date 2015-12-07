@@ -5,6 +5,7 @@ Combine rsa, DH, aes
 from DHService import DiffieHellman
 from Encryptor import Encryptor
 from Decryptor import Decryptor
+import hashlib
 
 class CryptoService(object):
     def __init__(self, rsa_pub_path=None, rsa_pri_path=None, p=None, g=None):
@@ -34,7 +35,11 @@ class CryptoService(object):
     def rsa_sign(self, msg):
         return self.decryptor.rsa_sign(msg)
 
+    def rsa_verify(self, msg, sign):
+        return self.encryptor.rsa_verify(msg, sign)
+
     def rsa_encrypt(self, p_text):
         return self.encryptor.rsa_encrypt(p_text)
 
-
+    def compute_pw_hash(self, pw, salt):
+        return hashlib.sha256(pw + salt).hexdigest()
