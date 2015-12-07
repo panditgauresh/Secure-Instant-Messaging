@@ -49,7 +49,7 @@ def generate_password_hash_dict(path):
         salt = os.urandom(6)
         pw_hash_dict[u] = (hashlib.sha256(pw_dict[u] + salt).hexdigest(), salt)
 
-    util.save(path, pw_hash_dict)
+    util.save(path, pw_hash_dict, True)
 
 if __name__ == '__main__':
     pw_path = "files/pw_hash_dict"
