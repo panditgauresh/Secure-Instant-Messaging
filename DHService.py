@@ -2,6 +2,7 @@
 
 import Utilities as util
 import Consts as c
+import hashlib
 
 class DiffieHellman(object):
     """
@@ -40,4 +41,6 @@ class DiffieHellman(object):
         :param other_public_key:
         :return:
         """
-        return pow(other_public_key, private_key, self.prime)
+        secret = pow(other_public_key, private_key, self.prime)
+        key = hashlib.sha256(str(secret)).hexdigest()
+        return key
