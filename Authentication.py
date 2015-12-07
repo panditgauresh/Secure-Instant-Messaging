@@ -20,7 +20,8 @@ class Authentication():
         self.timestamp = time.time()
         self.ra = RequestAuthority.RequestAuthority()
         self.stage = 0
-        self.dh_secret = 0
+        self.dh_key = 0
+        self.username = ""
 
     def get_response(self, message):
         pass
@@ -47,25 +48,26 @@ class Authentication():
             k = self.ra.getMaskSize()  # TODO flaw when mask size changed
             if self.ra.challengeComm.isChallengeMatched(k, ind, c_ans) or True:  # TODO for testing
                 # dec_dh_pub_client, username, n1 = self.crypto_service.rsa_decrypt(enc_client_msg).split(",")  # TODO decryption, get N1, public key,
-                dec_dh_pub_client, username, n1 = 321321321321321, "joncai", "321"  # TODO for testing
+                dec_dh_pub_client, self.username, n1 = 321321321321321, "joncai", "321"  # TODO for testing
                 n1 = int(n1)
                 dec_dh_pub_client = int(dec_dh_pub_client)
-                print("Seen DH public key: {}, Username: {}, n1: {}".format(dec_dh_pub_client, username, n1))
+                print("Seen DH public key: {}, Username: {}, n1: {}".format(dec_dh_pub_client, self.username, n1))
                 dh_pri_key = self.crypto_service.get_dh_pri_key()
                 dh_pub_server = self.crypto_service.get_dh_pub_key(dh_pri_key)
-                self.secret = self.crypto_service.get_dh_secret(dh_pri_key, dec_dh_pub_client)
+                self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, dec_dh_pub_client)
+                print("DH key established: {}".format(self.dh_key))
                 self.stage = 2
                 # compose response: public key, K{N1, salt}, sign whole message
                 salt = 0  # TODO get salt from username
                 nonce_and_salt = util.format_message(n1, salt)
-                enc_nonce_and_salt = self.crypto_service.sym_encrypt(self.secret, nonce_and_salt)
+                enc_nonce_and_salt = self.crypto_service.sym_encrypt(self.dh_key, nonce_and_salt)
                 msg = util.format_message(dh_pub_server, enc_nonce_and_salt)
                 sign = self.crypto_service.rsa_sign(msg)
                 signed_msg = util.format_message(msg, sign)
                 return signed_msg
         elif self.stage == 2:
             # decrypt the message and check the password hash
-
+            pw_hash, n = self.crypto_service.sym_decrypt(self.dh_key, request).split(',')
             self.stage = 3
             pass
 
