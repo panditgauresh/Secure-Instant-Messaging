@@ -15,7 +15,7 @@ class Encryptor():
         :param private_k_path:
         :return:
         '''
-        self.dest_pub_key = PublicKeyUtil(d_pub_k_path)
+        self.dest_pub_key = PublicKeyUtil(d_pub_k_path) if d_pub_k_path is not None else None
 
     def rsa_encrypt(self, p_text):
         # TODO need to rewrite

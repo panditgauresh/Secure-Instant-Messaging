@@ -10,8 +10,8 @@ class CryptoService(object):
     # TODO add AES methods
     def __init__(self, rsa_pub_path=None, rsa_pri_path=None, p=None, g=None):
         self.dh = DiffieHellman(p, g) if p is not None and g is not None else None
-        self.encryptor = Encryptor(rsa_pub_path) if rsa_pub_path is not None else None
-        self.decryptor = Decryptor(rsa_pri_path) if rsa_pri_path is not None else None
+        self.encryptor = Encryptor(rsa_pub_path)
+        self.decryptor = Decryptor(rsa_pri_path)
 
     def get_dh_pri_key(self):
         return self.dh.generate_private_key()

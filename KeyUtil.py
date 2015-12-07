@@ -46,7 +46,7 @@ class PrivateKeyUtil():
     def decrypt(self, c_text):
         # decrypt header
         tmp1 = len(c_text)
-        p_text = self.key.rsa_decrypt(c_text, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA1()),
+        p_text = self.key.decrypt(c_text, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA1()),
                                                            algorithm=hashes.SHA1(),
                                                            label=None))
         return p_text
@@ -63,7 +63,7 @@ class PublicKeyUtil():
 
     def encrypt(self, p_text):
         # encrypt header with rsa
-        c_text = self.key.rsa_encrypt(p_text, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA1()),
+        c_text = self.key.encrypt(p_text, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA1()),
                                                            algorithm=hashes.SHA1(),
                                                            label=None))
         return c_text
@@ -84,4 +84,9 @@ class PublicKeyUtil():
 
 if __name__ == '__main__':
     # PrivateKeyUtil.generate_keys('keys/key_sender')
-    PrivateKeyUtil.generate_keys('keys/key_server', key_size=4096)
+    # PrivateKeyUtil.generate_keys('keys/key_server', key_size=4096)
+    pk_path = "keys/key_server.pub"
+    pku = PublicKeyUtil(pk_path)
+    msg = "123,joncai,456"
+    enc_msg = pku.encrypt(msg)
+    print(enc_msg)

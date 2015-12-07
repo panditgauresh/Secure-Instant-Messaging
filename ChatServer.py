@@ -9,7 +9,7 @@ from CryptoService import CryptoService
 
 nonce_dict = {}
 auth_dict = {}
-cryto_service = None
+crypto_service = None
 
 class ChatRequestHandler(SocketServer.BaseRequestHandler):
 
@@ -17,7 +17,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         '''
         Perform packet handling logic
         '''
-        global auth_dict, nonce_dict, cryto_service
+        global auth_dict, nonce_dict, crypto_service
         msg = self.request[0]
         sock = self.request[1]
         print('Message received from {}: {}'.format(self.client_address, msg))
@@ -26,7 +26,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
             if msg != c.GREETING:
                 return
             # new client, create an auth entry in the auth dictionary
-            auth_dict[self.client_address] = Authentication.Authentication(self.client_address, cryto_service)
+            auth_dict[self.client_address] = Authentication.Authentication(self.client_address, crypto_service)
         cur_auth = auth_dict[self.client_address]
         assert isinstance(cur_auth, Authentication.Authentication)
         # TODO handle request, do the timestamp and nonce in handler class
@@ -37,7 +37,8 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
             rep = rep # TODO encrypted response
 
         try:
-            sock.sendto(rep, self.client_address)
+            if rep is not None:
+                sock.sendto(rep, self.client_address)
         except socket.error:
             print(c.FAIL_MSG_FWD)
             return
@@ -48,10 +49,10 @@ def run_server(port):
     Main function to run the server.
     '''
     # load config file for DH and username/password
-    global cryto_service
+    global crypto_service
     g = 2
     p = util.load_df_param_from_file('files/df_param')
-    cryto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
+    crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
 
     try:
         local_ip = socket.gethostbyname(socket.gethostname())

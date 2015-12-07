@@ -15,7 +15,7 @@ class Decryptor():
         :param private_k_path:
         :return:
         '''
-        self.private_key = PrivateKeyUtil(private_k_path)
+        self.private_key = PrivateKeyUtil(private_k_path) if private_k_path is not None else None
 
     def rsa_decrypt(self, c_file):
 
@@ -38,17 +38,17 @@ class Decryptor():
         return unpadded_data
 
 
-    def sym_decrypt(self, c_file):
+    def sym_decrypt(self, secret, c_file):
 
         # separate the header and content from c_text
         c_header = c_file[:c.HEADER_LENGTH]
         c_text = c_file[c.HEADER_LENGTH:]
 
-        # parse header to get sym_key and digest
-        sym_key, iv = self.parse_header(c_header)
+        # parse header to get digest
+        iv = self.parse_header(c_header)
 
         # decrypt the cipher text
-        cipher = Cipher(algorithms.AES(sym_key), modes.CBC(iv), backend=default_backend())
+        cipher = Cipher(algorithms.AES(secret), modes.CBC(iv), backend=default_backend())
         decryptor = cipher.decryptor()
         p_text = decryptor.update(c_text) + decryptor.finalize()
 
@@ -61,10 +61,8 @@ class Decryptor():
 
     def parse_header(self, header):
         # TODO exception handling
-        enc_sym_key = header[:c.ENC_SYM_KEY_LENGTH]
-        dec_sym_key = self.private_key.decrypt(enc_sym_key)
-        iv = header[c.ENC_SYM_KEY_LENGTH:c.ENC_SYM_KEY_LENGTH+c.IV_LENGTH]
-        return dec_sym_key, iv
+        iv = header
+        return iv
 
     def rsa_sign(self, msg):
         self.private_key.sign(msg)

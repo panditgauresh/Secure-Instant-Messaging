@@ -38,12 +38,18 @@ class Authentication():
             return util.format_message(c, k, ind)
         elif self.stage == 1:
             # check the challenge answer, decrypt the client DH public key and send DH public key back
-            c_ans, ind, enc_client_msg = request.split(',')
+            try:
+                c_ans, ind, enc_client_msg = request.split(',')
+            except:
+                return None
             c_ans = int(c_ans)
             ind = int(ind)
             k = self.ra.getMaskSize()  # TODO flaw when mask size changed
             if self.ra.challengeComm.isChallengeMatched(k, ind, c_ans) or True:  # TODO for testing
-                dec_dh_pub_client, username, n1 = self.crypto_service.rsa_decrypt(enc_client_msg).split(",")  # TODO decryption, get N1, public key,
+                # dec_dh_pub_client, username, n1 = self.crypto_service.rsa_decrypt(enc_client_msg).split(",")  # TODO decryption, get N1, public key,
+                dec_dh_pub_client, username, n1 = 321321321321321, "joncai", "321"  # TODO for testing
+                n1 = int(n1)
+                dec_dh_pub_client = int(dec_dh_pub_client)
                 print("Seen DH public key: {}, Username: {}, n1: {}".format(dec_dh_pub_client, username, n1))
                 dh_pri_key = self.crypto_service.get_dh_pri_key()
                 dh_pub_server = self.crypto_service.get_dh_pub_key(dh_pri_key)

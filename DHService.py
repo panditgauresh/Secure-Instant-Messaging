@@ -40,5 +40,4 @@ class DiffieHellman(object):
         :param other_public_key:
         :return:
         """
-        self.secret = pow(other_public_key, private_key, self.prime)
-        return
+        return pow(other_public_key, private_key, self.prime)
