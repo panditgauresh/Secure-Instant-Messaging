@@ -92,7 +92,14 @@ def retrieveOrigMsg(out_msg):
     print("out Message:"+str(out_msg))
     return out_msg
 
+def format_message(*args):
+    res = ""
+    for a in args:
+        res += str(a) + ","
+    return res[:-1]
+
 
 if __name__ == '__main__':
-    path = 'files/df_param'
-    print load_df_param_from_file(path)
+    # path = 'files/df_param'
+    # print load_df_param_from_file(path)
+    print format_message(1, 2, 3)
