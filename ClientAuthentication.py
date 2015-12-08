@@ -79,15 +79,15 @@ class ClientAuthentication(object):
             if self.packetgen.verifyNonce(n1_res):
                 # calculate password hash
                 pw_hash = self.crypto_service.compute_pw_hash(password, salt)
-                n2 = 1
-                msg = util.format_message(pw_hash, n2)
+                pw_hash_msg = self.packetgen.addNonce(pw_hash)
+                msg = util.format_message(pw_hash_msg)
                 auth_2_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
                 sock.sendto(auth_2_msg, self.server_addr)
                 # step 3
                 recv_msg = util.get_one_response(sock, self.server_addr)
                 print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
                 auth_result, n2_res = self.crypto_service.sym_decrypt(self.dh_key, recv_msg).split(",")
-                if int(n2_res) == n2:
+                if self.packetgen.verifyNonce(n2_res):
                     if auth_result == c.SUCCESS:
                         self.auth_success = True
                 else:
