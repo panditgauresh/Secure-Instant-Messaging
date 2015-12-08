@@ -5,7 +5,7 @@ import Utilities as util
 import Consts as c
 import socket
 import sys
-
+import PacketOrganiser
 
 class ClientAuthentication(object):
     """
@@ -26,6 +26,7 @@ class ClientAuthentication(object):
         self.dh_key = 0
         self.server_addr = server_addr
         self.auth_success = False
+        self.packetgen = PacketOrganiser.PacketOrganiser()
 
     def start_authentication(self, sock):
         """
@@ -57,9 +58,9 @@ class ClientAuthentication(object):
         ans = self.ra.compute_answer(chl, k)
         dh_pri_key = self.crypto_service.get_dh_pri_key()
         dh_pub_key = self.crypto_service.get_dh_pub_key(dh_pri_key)
-        n1 = 123
-        msg = util.format_message(dh_pub_key, username, n1)
-        enc_msg = self.crypto_service.rsa_encrypt(msg)
+        msg = util.format_message(dh_pub_key, username)
+        nonce_msg = self.packetgen.addNonce(msg)
+        enc_msg = self.crypto_service.rsa_encrypt(nonce_msg)
         auth_1_msg = util.format_message(ans, ind, enc_msg)
         sock.sendto(auth_1_msg, self.server_addr)
         # step 2
@@ -75,18 +76,18 @@ class ClientAuthentication(object):
             other_pub_key = int(other_pub_key)
             self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, other_pub_key)
             n1_res, salt = self.crypto_service.sym_decrypt(self.dh_key, enc_n1_and_salt).split(",")
-            if int(n1_res) == n1:
+            if self.packetgen.verifyNonce(n1_res):
                 # calculate password hash
                 pw_hash = self.crypto_service.compute_pw_hash(password, salt)
-                n2 = 1
-                msg = util.format_message(pw_hash, n2)
+                pw_hash_msg = self.packetgen.addNonce(pw_hash)
+                msg = util.format_message(pw_hash_msg)
                 auth_2_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
                 sock.sendto(auth_2_msg, self.server_addr)
                 # step 3
                 recv_msg = util.get_one_response(sock, self.server_addr)
                 print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
                 auth_result, n2_res = self.crypto_service.sym_decrypt(self.dh_key, recv_msg).split(",")
-                if int(n2_res) == n2:
+                if self.packetgen.verifyNonce(n2_res):
                     if auth_result == c.SUCCESS:
                         self.auth_success = True
                 else:

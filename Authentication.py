@@ -59,6 +59,7 @@ class Authentication(object):
                 self.username = username
                 # dec_dh_pub_client, self.username, n1 = 321321321321321, "admin", "321"  # TODO for testing
                 n1 = int(n1)
+                print(n1)
                 dec_dh_pub_client = int(dec_dh_pub_client)
                 print("Seen DH public key: {}, Username: {}, n1: {}".format(dec_dh_pub_client, self.username, n1))
                 dh_pri_key = self.crypto_service.get_dh_pri_key()
