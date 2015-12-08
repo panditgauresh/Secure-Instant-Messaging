@@ -6,6 +6,7 @@ from DHService import DiffieHellman
 from Encryptor import Encryptor
 from Decryptor import Decryptor
 import hashlib
+import os
 
 class CryptoService(object):
     def __init__(self, rsa_pub_path=None, rsa_pri_path=None, p=None, g=None):
@@ -43,3 +44,6 @@ class CryptoService(object):
 
     def compute_pw_hash(self, pw, salt):
         return hashlib.sha256(pw + salt).hexdigest()
+
+    def new_sym_key(self, size=32):
+        return os.urandom(size)

@@ -12,6 +12,7 @@ nonce_dict = {}
 auth_dict = {}
 crypto_service = None
 password_hash_dict = {}
+user_addr_dict = {}
 
 class ChatRequestHandler(SocketServer.BaseRequestHandler):
 
@@ -19,7 +20,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         '''
         Perform packet handling logic
         '''
-        global auth_dict, nonce_dict, crypto_service, password_hash_dict
+        global auth_dict, nonce_dict, crypto_service, password_hash_dict, user_addr_dict
         msg = self.request[0]
         sock = self.request[1]
         print('Message received from {}: {}'.format(self.client_address, msg))
@@ -35,6 +36,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         # TODO handle request, do the timestamp and nonce in handler class
         if not cur_auth.is_auth():
             rep = cur_auth.process_request(msg)
+
         else:
             rep = None  # TODO get reponse for keep-alive, list, chat and logout
             rep = rep # TODO encrypted response

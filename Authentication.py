@@ -28,7 +28,7 @@ class Authentication(object):
     def get_response(self, message):
         pass
 
-    def process_request(self,request):
+    def process_request(self,request, user_addr_dict):
         """
         Process request and generate the response
         :param request:
@@ -53,7 +53,10 @@ class Authentication(object):
             ind = int(ind)
             k = self.ra.getMaskSize()  # TODO flaw when mask size changed
             if self.ra.challengeComm.isChallengeMatched(k, ind, c_ans) or True:  # TODO for testing
-                dec_dh_pub_client, self.username, n1 = self.crypto_service.rsa_decrypt(enc_client_msg).split(",")  # TODO decryption, get N1, public key,
+                dec_dh_pub_client, username, n1 = self.crypto_service.rsa_decrypt(enc_client_msg).split(",")  # TODO decryption, get N1, public key,
+                if username in user_addr_dict:  # prevent duplicate login
+                    return None
+                self.username = username
                 # dec_dh_pub_client, self.username, n1 = 321321321321321, "admin", "321"  # TODO for testing
                 n1 = int(n1)
                 dec_dh_pub_client = int(dec_dh_pub_client)
@@ -79,6 +82,7 @@ class Authentication(object):
             msg = util.format_message(c.SUCCESS, n)
             enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
             self.stage = 3
+            user_addr_dict[self.username] = self.addr
             print("Authentication success.")
             return enc_msg
 
