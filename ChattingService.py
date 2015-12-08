@@ -25,7 +25,7 @@ class ChattingService(object):
         if tService.is_valid(ts):
             new_ts = tService.new_timestamp()
             self.auth_dict[addr].timestamp = new_ts  # update timestamp
-
+            raw_msg = None
             if msg_type == c.MSG_TYPE_KEEP_ALIVE:
                 raw_msg = self.handle_keep_alive()
             elif msg_type == c.MSG_TYPE_LIST:
@@ -34,7 +34,7 @@ class ChattingService(object):
                 raw_msg = self.handle_start_new_chat(addr, msg_args)
             elif msg_type == c.MSG_TYPE_LOGOUT:
                 raw_msg = self.handle_logout(addr)
-            return util.format_message(raw_msg, new_ts, nonce)
+            return util.format_message(raw_msg, new_ts, nonce) if raw_msg is not None else None
         else:
             return None
 
@@ -57,7 +57,7 @@ class ChattingService(object):
 
     def handle_start_new_chat(self, a_addr, b_addr):
         """
-
+        b_addr, k_ab, ttb, n2, ts, n1
         :param a_addr:
         :param b_addr:
         :return:
@@ -65,8 +65,10 @@ class ChattingService(object):
         k_ab = self.auth_dict[a_addr].crypto_service.new_sym_key()
         a_username = self.auth_dict[a_addr].username
         ttb = util.format_message(a_username, a_addr, k_ab, tService.new_timestamp())
-        # TODO to be continue
-        pass
+        # TODO to be continued
+        n2 = 2  # TODO generate nonce
+        res = util.format_message(b_addr, k_ab, ttb, n2)
+        return res
 
     def handle_logout(self, addr):
         """

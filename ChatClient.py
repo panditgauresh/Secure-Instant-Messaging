@@ -11,7 +11,7 @@ from ClientAuthentication import ClientAuthentication
 import Consts as c
 
 client_auth = None
-
+known_users = {}
 
 class ListenThread (threading.Thread):
 
@@ -29,10 +29,13 @@ class ListenThread (threading.Thread):
         '''
         Handling user input and sending message to the server.
         '''
+        global knonwn_users
         while self.listen:
             # waiting for user input
             user_input = sys.stdin.readline()
             if user_input:
+                # LIST,
+                
                 out_msg = Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
                 try:
                     self.sock.sendto(out_msg, self.server_addr)

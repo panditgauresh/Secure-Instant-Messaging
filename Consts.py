@@ -41,3 +41,7 @@ MSG_TYPE_START_NEW_CHAT = "New Chat"
 MSG_TYPE_LOGOUT = "Logout"
 
 MSG_RESPONSE_OK = "OK"
+
+USR_CMD_LIST = "LIST"
+USR_CMD_CHAT = "CHAT"
+USR_CMD_RE = "(?P<cmd>[(LIST)(CHAT (?P<user>[a-zA-Z]+))]) (?P<msg>.+)"
