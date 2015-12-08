@@ -1,5 +1,6 @@
 import datetime
 import os
+import Consts as c
 
 class PacketOrganiser(object):
     def __init__(self):
@@ -30,3 +31,8 @@ class PacketOrganiser(object):
 
     def addTimeStamp(self,out_msg):
         return str(out_msg) + "," + datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
+
+    def get_user_message(self, out_msg):
+        chat, user, msg = out_msg.split()
+        if(chat != c.USR_CMD_CHAT):
+            return None, None

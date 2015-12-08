@@ -45,3 +45,6 @@ MSG_RESPONSE_OK = "OK"
 USR_CMD_LIST = "LIST"
 USR_CMD_CHAT = "CHAT"
 USR_CMD_RE = "(?P<cmd>[(LIST)(CHAT (?P<user>[a-zA-Z]+))]) (?P<msg>.+)"
+
+ERR_CMD = "Command not right. Use List or [Chat <username> <msg>]"
+ERR_CMD_CHAT = "Chat command not right."
