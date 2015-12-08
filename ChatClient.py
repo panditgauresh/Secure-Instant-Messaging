@@ -81,7 +81,6 @@ def run_client(server_ip, server_port):
 
     client_auth = ClientAuthentication(client_addr, server_addr, crypto_service)
 
-
     try:
         client_auth.start_authentication(sock)
     except socket.error:
@@ -103,6 +102,7 @@ def run_client(server_ip, server_port):
                 if recv_msg.startswith(Consts.MSG_HEAD):
                     sys.stdout.write('\r<- {}'.format(recv_msg[2:]))
                     sys.stdout.write(Consts.PROMPT)
+                    sys.stdout.write('hahahaha')
                     sys.stdout.flush()
     except KeyboardInterrupt:
         # when seeing ctrl-c terminate the client
@@ -119,4 +119,4 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    run_client('192.168.1.175', 9090)
+    run_client('192.168.15.1', 9090)
