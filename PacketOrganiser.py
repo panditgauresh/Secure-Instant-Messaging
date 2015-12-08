@@ -3,7 +3,6 @@ import os
 import re
 import Consts as c
 
-
 class PacketOrganiser(object):
     def __init__(self):
         self.last_nonce = None
@@ -88,7 +87,13 @@ class PacketOrganiser(object):
     def get_new_timestamp():
         return datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
 
+    def get_user_message(self, out_msg):
+        chat, user, msg = out_msg.split()
+        if(chat != c.USR_CMD_CHAT):
+            return None, None
+
 if __name__ == '__main__':
     pkt = "100000500008abcdeabcsomething12345678"
     n, ts, msg_ps = PacketOrganiser.process_packet(pkt)
     print(n, ts, msg_ps)
+

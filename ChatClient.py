@@ -9,12 +9,14 @@ from CryptoService import CryptoService
 from FakeCryptoService import FakeCryptoService
 from ClientAuthentication import ClientAuthentication
 import Consts as c
+import UserInputHandler
+import PacketOrganiser
 
 client_auth = None
 known_users = {}
+pending_response = []
 
-class ListenThread (threading.Thread):
-
+class ListenThread(threading.Thread):
     def __init__(self, sock, saddr):
         '''
         sock: socket used for sending message to server
@@ -24,26 +26,39 @@ class ListenThread (threading.Thread):
         self.sock = sock
         self.listen = True  # flag for terminate the thread
         self.server_addr = saddr
+        self.packetorg = PacketOrganiser.PacketOrganiser()
 
     def run(self):
         '''
         Handling user input and sending message to the server.
         '''
         global knonwn_users
+        global pending_response
         while self.listen:
             # waiting for user input
             user_input = sys.stdin.readline()
             if user_input:
                 # LIST,
-                
-                out_msg = Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
-                try:
-                    self.sock.sendto(out_msg, self.server_addr)
-                except socket.error:
-                    print Consts.FAIL_SEND
-                    pass
-                sys.stdout.write(Consts.PROMPT)
-                sys.stdout.flush()
+                handler = UserInputHandler.UserInputHandler()
+                addr, out_msg = handler.handle_input(user_input, self.packetorg, known_users,
+                                                              self.server_addr)  # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
+                if addr:
+                    if addr == self.server_addr:
+                        pending_response.append(out_msg)
+                    try:
+                        self.sock.sendto(out_msg, addr)
+                    except socket.error:
+                        print Consts.FAIL_SEND
+                        pass
+                    sys.stdout.write(Consts.PROMPT)
+                    sys.stdout.flush()
+                elif out_msg:
+                    sys.stdout.write(out_msg)
+                    sys.stdout.flush()
+                else:
+                    sys.stdout.write(Consts.ERR_CMD)
+                    sys.stdout.write(Consts.PROMPT)
+                    sys.stdout.flush()
 
     def stop(self):
         '''
@@ -102,11 +117,14 @@ def run_client(server_ip, server_port):
             # listening to the server and display the message
             recv_msg, r_addr = sock.recvfrom(1024)
             if r_addr == server_addr and recv_msg:
+                decrypt_msg = client_auth.crypto_service.sym_decrypt(recv_msg)
+
                 if recv_msg.startswith(Consts.MSG_HEAD):
                     sys.stdout.write('\r<- {}'.format(recv_msg[2:]))
                     sys.stdout.write(Consts.PROMPT)
-                    sys.stdout.write('hahahaha')
                     sys.stdout.flush()
+            else:   #Reply or chat request from client
+                pass
     except KeyboardInterrupt:
         # when seeing ctrl-c terminate the client
         t.stop()
@@ -115,6 +133,7 @@ def run_client(server_ip, server_port):
         pass
     finally:
         sock.close()
+
 
 if __name__ == '__main__':
     # parser = argparse.ArgumentParser()

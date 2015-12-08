@@ -1,17 +1,17 @@
 """
 Handle the user input including LIST, send message to someone
 """
-
 import re
 import Consts as c
-
+import PacketOrganiser
+from CryptoService import CryptoService
 
 class UserInputHandler(object):
 
     def __init__(self):
         pass
 
-    def handle_input(self, msg):
+    def handle_input(self, msg, packetorg, users, serv_addr):
         """
 
         :param input:
@@ -19,10 +19,20 @@ class UserInputHandler(object):
         """
         # LIST, CHAT
         match_res = re.match(c.USR_CMD_RE, msg)
-        if match_res:
-
-
-
-        pass
-
-
+        if not match_res:   #Reply from server or chat client
+            return None, None
+        if msg == c.USR_CMD_LIST :
+            ts_msg = packetorg.addTimeStamp(msg)
+            return serv_addr, packetorg.addNonce(ts_msg)
+        else:
+            username, chat_msg = packetorg.get_user_message(msg)
+            if username in users:
+                addr, key, porg = users[username]
+                serv = CryptoService()
+                if chat_msg == "":
+                    return None, None
+                return addr, serv.sym_encrypt(key, chat_msg)
+            elif username:
+                 return serv_addr, packetorg.addNonce(packetorg.addTimeStamp(username))
+            else:
+                return None, c.ERR_CMD_CHAT
