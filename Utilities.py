@@ -117,7 +117,22 @@ def get_user_input(prompt):
     sys.stdout.flush()
     return sys.stdin.readline()[:-1]
 
+def addr_to_str(addr):
+    """
 
+    :param addr:
+    :return:
+    """
+    return addr[0] + ":" + addr[1]
+
+def str_to_addr(s):
+    """
+
+    :param s:
+    :return:
+    """
+    ss = s.split(":")
+    return (ss[0], int(ss[1]))
 
 if __name__ == '__main__':
     # path = 'files/df_param'
