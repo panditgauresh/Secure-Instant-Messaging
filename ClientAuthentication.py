@@ -79,7 +79,8 @@ class ClientAuthentication(object):
             if self.packetgen.verifyNonce(n1_res):
                 # calculate password hash
                 pw_hash = self.crypto_service.compute_pw_hash(password, salt)
-                pw_hash_msg = self.packetgen.addNonce(pw_hash)
+                pw_hash_timestamp = self.packetgen.addTimeStamp(pw_hash)
+                pw_hash_msg = self.packetgen.addNonce(pw_hash_timestamp)
                 msg = util.format_message(pw_hash_msg)
                 auth_2_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
                 sock.sendto(auth_2_msg, self.server_addr)

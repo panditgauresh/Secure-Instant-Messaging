@@ -35,7 +35,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         assert isinstance(cur_auth, Authentication.Authentication)
         # TODO handle request, do the timestamp and nonce in handler class
         if not cur_auth.is_auth():
-            rep = cur_auth.process_request(msg)
+            rep = cur_auth.process_request(msg, user_addr_dict)
 
         else:
             rep = None  # TODO get reponse for keep-alive, list, chat and logout

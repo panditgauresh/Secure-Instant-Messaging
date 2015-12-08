@@ -3,6 +3,7 @@ import time
 from CryptoService import CryptoService
 import Utilities as util
 import Consts as c
+import PacketOrganiser
 
 
 class Authentication(object):
@@ -77,15 +78,18 @@ class Authentication(object):
                 return signed_msg
         elif self.stage == 2:
             # decrypt the message and check the password hash
-            pw_hash, n = self.crypto_service.sym_decrypt(self.dh_key, request).split(',')
+            pw_hash, timestamp, n = self.crypto_service.sym_decrypt(self.dh_key, request).split(',')
             if pw_hash != self.pw_dict[self.username][0]:
                 return "WRONG PASSWORD"
-            msg = util.format_message(c.SUCCESS, n)
-            enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
-            self.stage = 3
-            user_addr_dict[self.username] = self.addr
-            print("Authentication success.")
-            return enc_msg
+            if PacketOrganiser.PacketOrganiser().isValidTimeStamp(timestamp):
+                msg = util.format_message(c.SUCCESS, n)
+                enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
+                self.stage = 3
+                user_addr_dict[self.username] = self.addr
+                print("Authentication success.")
+                return enc_msg
+            else:
+                print("TimeStamp Incorrect")
 
 
     def is_auth(self):

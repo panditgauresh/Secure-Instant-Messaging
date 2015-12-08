@@ -5,15 +5,18 @@ class PacketOrganiser(object):
     def __init__(self):
         self.last_nonce = None
 
+    def getNonce(timestamp):
+        return timestamp.rsplit(',',1)[1]
+
     def genRandomNumber(self, bit_size):
         return int(os.urandom(bit_size).encode('hex'),16)
 
-    def isValidTimeStamp(self,message):
-        timestamp = message.rsplit(',',2)[1]
-        recvTime = datetime.datetime.strptime(timestamp,"%H:%M:%S:%f")
-        timeNow = datetime.datetime.now().strptime(timestamp,"%H:%M:%S:%f")
+    def isValidTimeStamp(self,timestamp):
+        recvTime = datetime.datetime.strptime(timestamp,"%m:%d:%Y:%H:%M:%S:%f")
+        timeNow = datetime.datetime.now()
         diff = timeNow - recvTime
-        if(diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=200)):
+        print("Date Difference")
+        if(diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=10000)):
             return True
         return False
 
@@ -27,4 +30,4 @@ class PacketOrganiser(object):
         return False
 
     def addTimeStamp(self,out_msg):
-        return str(out_msg) + "," + datetime.datetime.now().strftime("%H:%M:%S:%f")
+        return str(out_msg) + "," + datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
