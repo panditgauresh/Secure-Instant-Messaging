@@ -56,3 +56,4 @@ NONCE_LEN = 8
 TS_LEN = 26
 ERR_CMD = "Command not right. Use LIST or [CHAT <username> <msg>]"
 ERR_CMD_CHAT = "Chat command not right."
+ERR_CMD_NO_USER = "Username doesn't exist!"

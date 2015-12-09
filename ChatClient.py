@@ -6,16 +6,18 @@ import argparse
 import datetime
 import Utilities as util
 from CryptoService import CryptoService
-from FakeCryptoService import FakeCryptoService
-from ClientAuthentication import ClientAuthentication
+from ClientServerAuthentication import ClientServerAuthentication
+from ClientClientAuthentication import ClientClientAuthentication
 import Consts as c
-import UserInputHandler
+from UserInputHandler import UserInputHandler
 from PacketOrganiser import PacketOrganiser
 from ClientChattingService import ClientChattingService
 
 server_auth = None
-user_auths = {}  # addr : auth
+active_users = []  # active user list from server
+addr_auths = {}  # addr : auth
 user_addr_dict = {}  # username : addr
+nonce_auths = {}  # nonce : auth for pre-auth (get TTB from server)
 pending_response = {}
 packetorg = PacketOrganiser()
 
@@ -35,15 +37,14 @@ class ListenThread(threading.Thread):
         '''
         Handling user input and sending message to the server.
         '''
-        global knonwn_users, pending_response, packetorg, server_auth
+        global user_addr_dict, nonce_auths, pending_response, packetorg, server_auth
         while self.listen:
             # waiting for user input
             user_input = sys.stdin.readline()
             if user_input:
                 # LIST,
-                handler = UserInputHandler.UserInputHandler(server_auth)
-                type, addr, out_msg = handler.handle_input(user_input, packetorg, user_auths,
-                                                           self.server_addr)  # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
+                handler = UserInputHandler(server_auth, user_addr_dict, addr_auths, nonce_auths, active_users)
+                type, addr, out_msg = handler.handle_input(user_input, packetorg)  # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
                 if addr:
                     if addr == self.server_addr:
                         pending_response[type] = packetorg.addTimeStamp(out_msg)
@@ -77,12 +78,12 @@ def run_client(server_ip, server_port):
     server_ip: IP address of the server
     server_port: port number which server uses to communicate
     '''
-    global server_auth, user_auths, user_addr_dict
+    global server_auth, user_auths, user_addr_dict, active_users
     g = 2
     p = util.load_df_param_from_file("files/df_param")
     crypto_service = CryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)
     # crypto_service = FakeCryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)   # TODO for test
-    chat_service = ClientChattingService()
+    chat_service = ClientChattingService(active_users)
 
     server_addr = (server_ip, server_port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -100,7 +101,7 @@ def run_client(server_ip, server_port):
             client_addr = (client_addr[0], client_addr[1] + 1)
             continue
 
-    server_auth = ClientAuthentication(client_addr, server_addr, crypto_service)
+    server_auth = ClientServerAuthentication(client_addr, server_addr, crypto_service)
 
     try:
         server_auth.start_authenticate(sock)
@@ -125,9 +126,18 @@ def run_client(server_ip, server_port):
                 dec_msg = crypto_service.sym_decrypt(server_auth.dh_key, recv_msg)
                 pending_response.pop("key", None)
                 n, ts, msg_ps = PacketOrganiser.process_packet(dec_msg)
-                print(ts)
                 if PacketOrganiser.isValidTimeStamp(ts):  # TODO for testing
-                    chat_service.process_message(msg_ps)
+                    # first check if it's a client/client authentication
+                    # response from server
+                    if n in nonce_auths:
+                        # TODO process the auth response from server
+                        cur_auth = nonce_auths.pop(n)
+                        assert isinstance(cur_auth, ClientClientAuthentication)
+                        b_addr = cur_auth.start_authenticate(sock, msg_ps)
+                        addr_auths[b_addr] = cur_auth
+
+                    else:
+                        chat_service.process_message(msg_ps)
                 else:
                     print("Time stamp invalid!")
                 # if recv_msg.startswith(Consts.MSG_HEAD):

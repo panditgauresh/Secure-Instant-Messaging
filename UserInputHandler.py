@@ -5,14 +5,20 @@ import re
 import Consts as c
 from PacketOrganiser import PacketOrganiser
 from CryptoService import CryptoService
+from ClientClientAuthentication import ClientClientAuthentication
+
 
 class UserInputHandler(object):
 
-    def __init__(self, client_auth):
-        self.auth = client_auth
+    def __init__(self, server_auth, user_addr_dict, addr_auths, nonce_auths, active_users):
+        self.auth = server_auth
+        self.user_addr_dict = user_addr_dict
+        self.addr_auths = addr_auths
+        self.nonce_auths = nonce_auths
+        self.active_users = active_users
         self.serv = CryptoService()
 
-    def handle_input(self, msg, packetorg, users, serv_addr):
+    def handle_input(self, msg, packetorg):
         """
 
         :param input:
@@ -22,20 +28,28 @@ class UserInputHandler(object):
         msg = msg[:-1]
         match_res = re.match(c.USR_CMD_RE, msg)
         if not match_res:   #Reply from server or chat client
-            return None, None, None
+            return None, None, c.ERR_CMD_CHAT
         if msg == c.USR_CMD_LIST:
             res_msg = PacketOrganiser.prepare_packet(c.USR_CMD_LIST, PacketOrganiser.genRandomNumber())
             # ts_msg = packetorg.addTimeStamp(msg)
-            return c.USR_CMD_LIST, serv_addr, self.serv.sym_encrypt(self.auth.dh_key, res_msg)
-        else:
-            username, chat_msg = packetorg.get_user_message(msg)
-            if username in users:
-                addr, key, nonce = users[username]
-
-                if chat_msg == "":
-                    return None, None, None
-                return None, addr, self.serv.sym_encrypt(key, chat_msg)
-            elif username:
-                 return username, serv_addr, packetorg.addNonce(packetorg.addTimeStamp(username))
+            return c.USR_CMD_LIST, self.auth.server_addr, self.serv.sym_encrypt(self.auth.dh_key, res_msg)
+        elif match_res.groups()[0] == c.USR_CMD_CHAT:
+            username, chat_msg = match_res.groups()[1:]
+            if username in self.user_addr_dict:
+                addr = self.user_addr_dict[username]
+                auth = self.addr_auths[addr]
+                key = auth.dh_key
+                nonce = PacketOrganiser.genRandomNumber()
+                auth.last_nonce = nonce
+                msg_to_send = PacketOrganiser.prepare_packet([c.MSG_TYPE_MSG, chat_msg, ""], nonce=nonce)
+                return None, addr, self.serv.sym_encrypt(key, msg_to_send)
+            elif username in self.active_users:
+                # start peer authentication
+                nonce = PacketOrganiser.genRandomNumber()
+                self.nonce_auths[nonce] = ClientClientAuthentication(username, self.auth.crypto_service, chat_msg)
+                key = self.auth.dh_key
+                msg_to_send = PacketOrganiser.prepare_packet([c.MSG_TYPE_START_NEW_CHAT, username, ""], nonce=nonce)
+                return username, self.auth.server_addr, self.serv.sym_encrypt(key, msg_to_send)
             else:
-                return None, None, c.ERR_CMD_CHAT
+                return None, None, c.ERR_CMD_NO_USER
+
