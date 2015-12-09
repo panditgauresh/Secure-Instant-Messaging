@@ -41,6 +41,7 @@ class ListenThread(threading.Thread):
         while self.listen:
             # waiting for user input
             user_input = sys.stdin.readline()
+            packetorg.user_addr_dict = user_addr_dict
             if user_input:
                 # LIST,
                 handler = UserInputHandler(server_auth, user_addr_dict, addr_auths, nonce_auths, active_users)
@@ -171,4 +172,4 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    run_client('192.168.1.175', 9090)
+    run_client('192.168.15.1', 9090)

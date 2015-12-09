@@ -46,6 +46,7 @@ class UserInputHandler(object):
             elif username in self.active_users:
                 # start peer authentication
                 nonce = PacketOrganiser.genRandomNumber()
+                print("Chatting initiated")
                 while nonce in self.nonce_auths:   # avoid key conflict
                     nonce = PacketOrganiser.genRandomNumber()
                 self.nonce_auths[nonce] = ClientClientAuthentication(username, self.auth.crypto_service, chat_msg)
@@ -54,4 +55,6 @@ class UserInputHandler(object):
                 return username, self.auth.server_addr, self.serv.sym_encrypt(key, msg_to_send)
             else:
                 return None, None, c.ERR_CMD_NO_USER
+        else:
+            return None, None, c.ERR_CMD_CHAT
 

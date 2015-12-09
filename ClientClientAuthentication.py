@@ -37,6 +37,7 @@ class ClientClientAuthentication(object):
         :return:
         """
         # TODO to be continued
+        print(auth_info)
         pass
 
     def handle_auth_request_from_client(self, sock):
