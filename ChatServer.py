@@ -6,21 +6,23 @@ import os
 import Utilities as util
 import Authentication
 from CryptoService import CryptoService
-from FakeCryptoService import FakeCryptoService
+from PacketOrganiser import PacketOrganiser
+from ChattingService import ChattingService
 
 nonce_dict = {}
 auth_dict = {}
 crypto_service = None
+chatting_service = None
 password_hash_dict = {}
 user_addr_dict = {}
 
-class ChatRequestHandler(SocketServer.BaseRequestHandler):
 
+class ChatRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         '''
         Perform packet handling logic
         '''
-        global auth_dict, nonce_dict, crypto_service, password_hash_dict, user_addr_dict
+        global auth_dict, nonce_dict, crypto_service, password_hash_dict, user_addr_dict, chatting_service
         msg = self.request[0]
         sock = self.request[1]
         print('Message received from {}: {}'.format(self.client_address, msg))
@@ -34,16 +36,25 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         cur_auth = auth_dict[self.client_address]
         assert isinstance(cur_auth, Authentication.Authentication)
         # TODO handle request, do the timestamp and nonce in handler class
+        rep = None
         if not cur_auth.is_auth():
             rep = cur_auth.process_request(msg, user_addr_dict)
 
         else:
-            rep = None  # TODO get reponse for keep-alive, list, chat and logout
-            rep = rep # TODO encrypted response
+            # get decrypted msg
+            dec_msg = crypto_service.sym_decrypt(cur_auth.dh_key, msg)
+            n, ts, msg_ps = PacketOrganiser.process_packet(dec_msg)
+            if PacketOrganiser.isValidTimeStamp(ts):
+                auth_dict[self.client_address].timestamp = PacketOrganiser.get_new_timestamp()  # update timestamp
+                rep = chatting_service.get_response(self.client_address, msg_ps)
+            if rep is not None:
+                rep = PacketOrganiser.prepare_packet(rep, n)
+                rep = crypto_service.sym_encrypt(cur_auth.dh_key, rep)  # TODO encrypted response
 
         try:
             if rep is not None:
                 print("Sending msg length {}: {}".format(len(rep), rep))
+
                 sock.sendto(rep, self.client_address)
         except socket.error:
             print(c.FAIL_MSG_FWD)
@@ -55,12 +66,12 @@ def run_server(port):
     Main function to run the server.
     '''
     # load config file for DH and username/password
-    global crypto_service, password_hash_dict
-    g = 2
+    global crypto_service, password_hash_dict, chatting_service, user_addr_dict, auth_dict
+    g = c.DH_GENERATOR
     p = util.load_df_param_from_file("files/df_param")
     crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
     # crypto_service = FakeCryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)   # TODO for test
-
+    chatting_service = ChattingService(user_addr_dict, auth_dict)
     pw_dict_path = "files/pw_hash_dict"
     password_hash_dict = util.load_pickle_file(pw_dict_path)
     try:
@@ -82,6 +93,7 @@ def run_server(port):
         print c.FAIL_SRV_START
     finally:
         serv.server_close()
+
 
 if __name__ == '__main__':
     # parser = argparse.ArgumentParser()

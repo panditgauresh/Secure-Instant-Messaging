@@ -23,7 +23,7 @@ C_TEXT_LEN_4096 = 512
 
 DH_PRIME_SIZE = 2048
 DH_KEY_SIZE = 512
-DH_GENERATOR_INDEX = 0
+DH_GENERATOR = 2
 
 
 SYM_KEY_LENGTH = 32
@@ -46,5 +46,12 @@ USR_CMD_LIST = "LIST"
 USR_CMD_CHAT = "CHAT"
 USR_CMD_RE = "(?P<cmd>[(LIST)(CHAT (?P<user>[a-zA-Z]+))]) (?P<msg>.+)"
 
+# header: HAS_NONCE, HAS_TS, END_OF_FIRST_PART, END_OF_SECOND_PART
+HEADER_LEN = 12
+PKT_HEADER_RE = "(?P<has_ts>\d)(?P<has_nonce>\d)(?P<eofp>\d{5})(?P<eosp>\d{5})"
+TRUE_STR = "1"
+FALSE_STR = "0"
+NONCE_LEN = 8
+TS_LEN = 26
 ERR_CMD = "Command not right. Use List or [Chat <username> <msg>]"
 ERR_CMD_CHAT = "Chat command not right."
