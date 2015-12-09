@@ -51,7 +51,7 @@ class ChattingService(object):
         res = ""
         for user in self.user_addr_dict:
             res += user + ","
-        return res[:-1]
+        return [c.MSG_TYPE_LIST, res[:-1], ""]
 
     def handle_start_new_chat(self, a_addr, b_addr):
         """

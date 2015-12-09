@@ -10,12 +10,14 @@ from FakeCryptoService import FakeCryptoService
 from ClientAuthentication import ClientAuthentication
 import Consts as c
 import UserInputHandler
-import PacketOrganiser
+from PacketOrganiser import PacketOrganiser
+from ClientChattingService import ClientChattingService
 
-client_auth = None
-known_users = {}
+server_auth = None
+user_auths = {}  # addr : auth
+user_addr_dict = {}  # username : addr
 pending_response = {}
-packetorg = PacketOrganiser.PacketOrganiser()
+packetorg = PacketOrganiser()
 
 class ListenThread(threading.Thread):
     def __init__(self, sock, saddr):
@@ -33,15 +35,15 @@ class ListenThread(threading.Thread):
         '''
         Handling user input and sending message to the server.
         '''
-        global knonwn_users, pending_response, packetorg, client_auth
+        global knonwn_users, pending_response, packetorg, server_auth
         while self.listen:
             # waiting for user input
             user_input = sys.stdin.readline()
             if user_input:
                 # LIST,
-                handler = UserInputHandler.UserInputHandler(client_auth)
-                type, addr, out_msg = handler.handle_input(user_input, packetorg, known_users,
-                                                              self.server_addr)  # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
+                handler = UserInputHandler.UserInputHandler(server_auth)
+                type, addr, out_msg = handler.handle_input(user_input, packetorg, user_auths,
+                                                           self.server_addr)  # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
                 if addr:
                     if addr == self.server_addr:
                         pending_response[type] = packetorg.addTimeStamp(out_msg)
@@ -75,11 +77,12 @@ def run_client(server_ip, server_port):
     server_ip: IP address of the server
     server_port: port number which server uses to communicate
     '''
-    global client_auth
+    global server_auth, user_auths, user_addr_dict
     g = 2
     p = util.load_df_param_from_file("files/df_param")
     crypto_service = CryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)
     # crypto_service = FakeCryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)   # TODO for test
+    chat_service = ClientChattingService()
 
     server_addr = (server_ip, server_port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -97,10 +100,10 @@ def run_client(server_ip, server_port):
             client_addr = (client_addr[0], client_addr[1] + 1)
             continue
 
-    client_auth = ClientAuthentication(client_addr, server_addr, crypto_service)
+    server_auth = ClientAuthentication(client_addr, server_addr, crypto_service)
 
     try:
-        client_auth.start_authentication(sock)
+        server_auth.start_authenticate(sock)
     except socket.error:
         print Consts.FAIL_GRE_MSG
         return
@@ -119,20 +122,28 @@ def run_client(server_ip, server_port):
             # listening to the server and display the message
             recv_msg, r_addr = sock.recvfrom(20480)
             if r_addr == server_addr and recv_msg:
-                decrypt_msg = client_auth.crypto_service.sym_decrypt(client_auth.dh_key, recv_msg)
-                #decrypt_msg.split(",")
+                dec_msg = crypto_service.sym_decrypt(server_auth.dh_key, recv_msg)
                 pending_response.pop("key", None)
-                if recv_msg.startswith(Consts.MSG_HEAD):
-                    sys.stdout.write('\r<- {}'.format(recv_msg[2:]))
-                    sys.stdout.write(Consts.PROMPT)
-                    sys.stdout.flush()
-            else:   #Reply or chat request from client
+                n, ts, msg_ps = PacketOrganiser.process_packet(dec_msg)
+                print(ts)
+                if PacketOrganiser.isValidTimeStamp(ts):  # TODO for testing
+                    chat_service.process_message(msg_ps)
+                else:
+                    print("Time stamp invalid!")
+                # if recv_msg.startswith(Consts.MSG_HEAD):
+                #     sys.stdout.write('\r<- {}'.format(recv_msg[2:]))
+                #     sys.stdout.write(Consts.PROMPT)
+                #     sys.stdout.flush()
+            elif r_addr in user_addr_dict:   #Reply or chat request from client
+                dh_key = user_auths[user_addr_dict[r_addr]][1]
+                decrypt_msg = crypto_service.sym_decrypt(dh_key, recv_msg)
+
                 pass
 
         except socket.timeout:
             for key, value in pending_response.items():
                 if packetorg.hasTimedOut(value):
-                    sock.sendto(packetorg.modifyTimeStamp(value, client_auth),server_addr)
+                    sock.sendto(packetorg.modifyTimeStamp(value, server_auth), server_addr)
             continue
         except KeyboardInterrupt:
             # when seeing ctrl-c terminate the client
@@ -150,4 +161,4 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    run_client('192.168.1.2', 9090)
+    run_client('192.168.1.175', 9090)

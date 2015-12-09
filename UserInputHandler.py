@@ -30,7 +30,7 @@ class UserInputHandler(object):
         else:
             username, chat_msg = packetorg.get_user_message(msg)
             if username in users:
-                addr, key, porg = users[username]
+                addr, key, nonce = users[username]
 
                 if chat_msg == "":
                     return None, None

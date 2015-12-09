@@ -134,6 +134,17 @@ def str_to_addr(s):
     ss = s.split(":")
     return (ss[0], int(ss[1]))
 
+def cmd_output(msg):
+    """
+
+    :param msg:
+    :return:
+    """
+    sys.stdout.write(msg)
+    sys.stdout.write(c.PROMPT)
+    sys.stdout.flush()
+
+
 if __name__ == '__main__':
     # path = 'files/df_param'
     # print load_df_param_from_file(path)

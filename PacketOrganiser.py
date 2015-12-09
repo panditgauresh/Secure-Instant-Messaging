@@ -72,7 +72,7 @@ class PacketOrganiser(object):
         recvTime = datetime.datetime.strptime(timestamp, "%m:%d:%Y:%H:%M:%S:%f")
         timeNow = datetime.datetime.now()
         diff = timeNow - recvTime
-        if (diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=10000)):
+        if (diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=100000)):
             return True
         return False
 

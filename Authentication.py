@@ -26,9 +26,6 @@ class Authentication(object):
         self.username = ""
         self.pw_dict = pw_dict
 
-    def get_response(self, message):
-        pass
-
     def process_request(self,request, user_addr_dict):
         """
         Process request and generate the response

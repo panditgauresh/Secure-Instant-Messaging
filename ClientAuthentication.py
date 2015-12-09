@@ -16,7 +16,7 @@ class ClientAuthentication(object):
         3 : auth success
     """
 
-    def __init__(self, addr, server_addr, crypto_service):
+    def __init__(self, addr, remote_addr, crypto_service, is_server=True):
         assert isinstance(crypto_service, CryptoService)
         self.crypto_service = crypto_service
         self.addr = addr
@@ -24,11 +24,48 @@ class ClientAuthentication(object):
         self.ra = RequestAuthority.RequestAuthority()
         self.stage = 0
         self.dh_key = 0
-        self.server_addr = server_addr
+        self.server_addr = remote_addr
         self.auth_success = False
         self.packetgen = PacketOrganiser.PacketOrganiser()
+        self.is_server = is_server
 
-    def start_authentication(self, sock):
+    def start_authenticate(self, sock):
+        if self.is_server:
+            self.authenticate_with_server(sock)
+        else:
+            self.authenticate_with_client(sock)
+
+    def authenticate_with_client(self, sock):
+        """
+        :param sock:
+        :return:
+        """
+        # TODO to be continued
+        while not success:
+            success, msg = self._establish_server_session_key(sock, username, password)
+            if msg == c.WRONG_PASSWORD:
+                password = util.get_user_input(c.PASSWORD)
+        print("authenticate success!")
+
+    def handle_auth_request_from_client(self, sock):
+        """
+        handling Chatting requests from other client
+        :param sock:
+        :return:
+        """
+        pass
+
+    def handle_auth_response_from_client(self, sock):
+        """
+        handle response message for auth between clients
+        * TTB response from server
+
+        :param sock:
+        :return:
+        """
+        pass
+
+    def authenticate_with_server(self, sock):
         """
 
         :return:
