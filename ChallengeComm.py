@@ -1,4 +1,5 @@
 import os
+import hashlib
 
 class ChallengeComm():
     def __init__(self):
@@ -20,7 +21,15 @@ class ChallengeComm():
         self.challenges[index] = self.genRandomNumber(3)
 
     def isChallengeMatched(self,mask,index,challenge):
-        if((self.challenges[index] & mask) == challenge):
+        print str(challenge)+":challenge:"+str(self.challenges[index])
+        if (self.challenges[index] & ((1<<mask)-1)) == challenge:
             self.refreshChallenge(index)
             return True
         return False
+
+    def computeChallenge(self, mask, hashed):
+        print mask +": Mask Value" + str(hashed)
+        for i in range((1<<int(mask))-1):
+            if hashlib.sha256(str(i).encode('utf-8')).hexdigest() == hashed:
+                return i
+        return None

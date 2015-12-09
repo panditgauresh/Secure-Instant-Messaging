@@ -8,6 +8,7 @@ import Authentication
 from CryptoService import CryptoService
 from PacketOrganiser import PacketOrganiser
 from ChattingService import ChattingService
+import sys
 
 nonce_dict = {}
 auth_dict = {}
@@ -54,7 +55,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         try:
             if rep is not None:
                 print("Sending msg length {}: {}".format(len(rep), rep))
-
+                sys.stdout.flush()
                 sock.sendto(rep, self.client_address)
         except socket.error:
             print(c.FAIL_MSG_FWD)

@@ -22,7 +22,7 @@ class UserInputHandler(object):
         msg = msg[:-1]
         match_res = re.match(c.USR_CMD_RE, msg)
         if not match_res:   #Reply from server or chat client
-            return None, None
+            return None, None, None
         if msg == c.USR_CMD_LIST:
             res_msg = PacketOrganiser.prepare_packet(c.USR_CMD_LIST, PacketOrganiser.genRandomNumber())
             # ts_msg = packetorg.addTimeStamp(msg)
@@ -33,9 +33,9 @@ class UserInputHandler(object):
                 addr, key, nonce = users[username]
 
                 if chat_msg == "":
-                    return None, None
+                    return None, None, None
                 return None, addr, self.serv.sym_encrypt(key, chat_msg)
             elif username:
                  return username, serv_addr, packetorg.addNonce(packetorg.addTimeStamp(username))
             else:
-                return None, c.ERR_CMD_CHAT
+                return None, None, c.ERR_CMD_CHAT
