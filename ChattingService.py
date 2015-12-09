@@ -31,7 +31,7 @@ class ChattingService(object):
         elif msg_type == c.MSG_TYPE_LIST:
             res_msg = self.handle_list()
         elif msg_type == c.MSG_TYPE_START_NEW_CHAT:
-            res_msg = self.handle_start_new_chat(addr, msg_args)
+            res_msg = self.handle_start_new_chat(addr, msg_parts)
         elif msg_type == c.MSG_TYPE_LOGOUT:
             res_msg = self.handle_logout(addr)
         return res_msg
