@@ -14,7 +14,8 @@ import PacketOrganiser
 
 client_auth = None
 known_users = {}
-pending_response = []
+pending_response = {}
+packetorg = PacketOrganiser.PacketOrganiser()
 
 class ListenThread(threading.Thread):
     def __init__(self, sock, saddr):
@@ -26,7 +27,7 @@ class ListenThread(threading.Thread):
         self.sock = sock
         self.listen = True  # flag for terminate the thread
         self.server_addr = saddr
-        self.packetorg = PacketOrganiser.PacketOrganiser()
+
 
     def run(self):
         '''
@@ -34,17 +35,18 @@ class ListenThread(threading.Thread):
         '''
         global knonwn_users
         global pending_response
+        global packetorg
         while self.listen:
             # waiting for user input
             user_input = sys.stdin.readline()
             if user_input:
                 # LIST,
                 handler = UserInputHandler.UserInputHandler()
-                addr, out_msg = handler.handle_input(user_input, self.packetorg, known_users,
+                type, addr, out_msg = handler.handle_input(user_input, packetorg, known_users,
                                                               self.server_addr)  # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
                 if addr:
                     if addr == self.server_addr:
-                        pending_response.append(out_msg)
+                        pending_response[type] = packetorg.addTimeStamp(out_msg)
                     try:
                         self.sock.sendto(out_msg, addr)
                     except socket.error:
@@ -112,27 +114,37 @@ def run_client(server_ip, server_port):
     sys.stdout.write(Consts.PROMPT)
     sys.stdout.flush()
 
-    try:
-        while True:
+    sock.settimeout(1)
+
+    while True:
+        try:
             # listening to the server and display the message
             recv_msg, r_addr = sock.recvfrom(1024)
             if r_addr == server_addr and recv_msg:
                 decrypt_msg = client_auth.crypto_service.sym_decrypt(recv_msg)
-
+                #decrypt_msg.split(",")
+                pending_response.pop("key", None)
                 if recv_msg.startswith(Consts.MSG_HEAD):
                     sys.stdout.write('\r<- {}'.format(recv_msg[2:]))
                     sys.stdout.write(Consts.PROMPT)
                     sys.stdout.flush()
             else:   #Reply or chat request from client
                 pass
-    except KeyboardInterrupt:
-        # when seeing ctrl-c terminate the client
-        t.stop()
-        t.join()
-        print Consts.BYE
-        pass
-    finally:
-        sock.close()
+
+        except socket.timeout:
+            for key, value in pending_response:
+                if packetorg.hasTimedOut(value):
+                    sock.sendto(packetorg.modifyTimeStamp(value, client_auth),server_addr)
+            continue
+        except KeyboardInterrupt:
+            # when seeing ctrl-c terminate the client
+            t.stop()
+            t.join()
+            print Consts.BYE
+            break
+            pass
+        finally:
+            sock.close()
 
 
 if __name__ == '__main__':
