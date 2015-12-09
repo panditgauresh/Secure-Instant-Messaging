@@ -46,6 +46,8 @@ class UserInputHandler(object):
             elif username in self.active_users:
                 # start peer authentication
                 nonce = PacketOrganiser.genRandomNumber()
+                while nonce in self.nonce_auths:   # avoid key conflict
+                    nonce = PacketOrganiser.genRandomNumber()
                 self.nonce_auths[nonce] = ClientClientAuthentication(username, self.auth.crypto_service, chat_msg)
                 key = self.auth.dh_key
                 msg_to_send = PacketOrganiser.prepare_packet([c.MSG_TYPE_START_NEW_CHAT, username, ""], nonce=nonce)
