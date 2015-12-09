@@ -58,9 +58,12 @@ class ListenThread(threading.Thread):
                     sys.stdout.flush()
                 elif out_msg:
                     sys.stdout.write(out_msg)
+                    sys.stdout.write("\n")
+                    sys.stdout.write(Consts.PROMPT)
                     sys.stdout.flush()
                 else:
                     sys.stdout.write(Consts.ERR_CMD)
+                    sys.stdout.write("\n")
                     sys.stdout.write(Consts.PROMPT)
                     sys.stdout.flush()
 

@@ -29,12 +29,14 @@ class UserInputHandler(object):
         match_res = re.match(c.USR_CMD_RE, msg)
         if not match_res:   #Reply from server or chat client
             return None, None, c.ERR_CMD_CHAT
+        print(match_res.groups())
         if msg == c.USR_CMD_LIST:
             res_msg = PacketOrganiser.prepare_packet(c.USR_CMD_LIST, PacketOrganiser.genRandomNumber())
             # ts_msg = packetorg.addTimeStamp(msg)
             return c.USR_CMD_LIST, self.auth.server_addr, self.serv.sym_encrypt(self.auth.dh_key, res_msg)
-        elif match_res.groups()[0] == c.USR_CMD_CHAT:
-            username, chat_msg = match_res.groups()[1:]
+        elif match_res.group("chat") == c.USR_CMD_CHAT:
+            username = match_res.group("username")
+            chat_msg = match_res.group("msg")
             if username in self.user_addr_dict:
                 addr = self.user_addr_dict[username]
                 auth = self.addr_auths[addr]
@@ -44,9 +46,9 @@ class UserInputHandler(object):
                 msg_to_send = PacketOrganiser.prepare_packet([c.MSG_TYPE_MSG, chat_msg, ""], nonce=nonce)
                 return None, addr, self.serv.sym_encrypt(key, msg_to_send)
             elif username in self.active_users:
+                print("Chatting initiated what")
                 # start peer authentication
                 nonce = PacketOrganiser.genRandomNumber()
-                print("Chatting initiated")
                 while nonce in self.nonce_auths:   # avoid key conflict
                     nonce = PacketOrganiser.genRandomNumber()
                 self.nonce_auths[nonce] = ClientClientAuthentication(username, self.auth.crypto_service, chat_msg)

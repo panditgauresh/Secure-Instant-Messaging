@@ -50,6 +50,9 @@ class PacketOrganiser(object):
         has_ts = c.TRUE_STR
         has_nonce = c.TRUE_STR if nonce is not None else c.FALSE_STR
         eofp = str(len(msg_parts[0])).zfill(5)
+        print("EOSP")
+        print(msg_parts[0])
+        print(msg_parts[1])
         eosp = str(len(msg_parts[0] + msg_parts[1])).zfill(5)
         header = has_nonce + has_ts + eofp + eosp
         res_msg = header + "".join(msg_parts) + PacketOrganiser.get_new_timestamp() + (nonce if nonce is not None else "")

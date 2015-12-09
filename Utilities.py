@@ -123,7 +123,7 @@ def addr_to_str(addr):
     :param addr:
     :return:
     """
-    return addr[0] + ":" + addr[1]
+    return str(addr[0]) + ":" + str(addr[1])
 
 def str_to_addr(s):
     """
