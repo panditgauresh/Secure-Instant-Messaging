@@ -57,9 +57,12 @@ class ListenThread(threading.Thread):
                     sys.stdout.flush()
                 elif out_msg:
                     sys.stdout.write(out_msg)
+                    sys.stdout.write("\n")
+                    sys.stdout.write(Consts.PROMPT)
                     sys.stdout.flush()
                 else:
                     sys.stdout.write(Consts.ERR_CMD)
+                    sys.stdout.write("\n")
                     sys.stdout.write(Consts.PROMPT)
                     sys.stdout.flush()
 
@@ -171,4 +174,4 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    run_client('192.168.1.175', 9090)
+    run_client('192.168.125.1', 9090)
