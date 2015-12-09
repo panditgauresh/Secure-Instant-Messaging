@@ -24,7 +24,7 @@ class UserInputHandler(object):
             return None, None
         if msg == c.USR_CMD_LIST :
             ts_msg = packetorg.addTimeStamp(msg)
-            return serv_addr, packetorg.addNonce(ts_msg)
+            return c.USR_CMD_LIST, serv_addr, packetorg.addNonce(ts_msg)
         else:
             username, chat_msg = packetorg.get_user_message(msg)
             if username in users:
@@ -32,8 +32,8 @@ class UserInputHandler(object):
                 serv = CryptoService()
                 if chat_msg == "":
                     return None, None
-                return addr, serv.sym_encrypt(key, chat_msg)
+                return None, addr, serv.sym_encrypt(key, chat_msg)
             elif username:
-                 return serv_addr, packetorg.addNonce(packetorg.addTimeStamp(username))
+                 return username, serv_addr, packetorg.addNonce(packetorg.addTimeStamp(username))
             else:
                 return None, c.ERR_CMD_CHAT

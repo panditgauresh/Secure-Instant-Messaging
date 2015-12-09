@@ -81,6 +81,23 @@ class PacketOrganiser(object):
     def addTimeStamp(self, out_msg):
         return str(out_msg) + "," + datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
 
+    def hasTimedOut(self,out_msg):
+        timestamp = out_msg.rsplit(',',1)[1]
+        recvTime = datetime.datetime.strptime(timestamp,"%m:%d:%Y:%H:%M:%S:%f")
+        timeNow = datetime.datetime.now()
+        diff = timeNow - recvTime
+        if(diff.days == 0 and abs(diff) > datetime.timedelta(seconds=2)):
+            return True
+        return False
+
+    def modifyTimeStamp(self, message, client_auth):
+        encrypt_msg = message.rsplit(',',1)[0]
+        decrypt_msg = client_auth.crypto_service.sym_decrypt(encrypt_msg)
+        #Todo: Change this method to remove nonce and timestamp in a better way
+        msg, ts, nonce = decrypt_msg.rsplit(',')
+        out_msg = self.addTimeStamp(msg)
+        return client_auth.crypto_service.sym_encrypt(self.addNonce(out_msg))
+
     @staticmethod
     def get_new_timestamp():
         return datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
