@@ -48,7 +48,7 @@ class PacketOrganiser(object):
         eofp = str(len(msg_parts[0])).zfill(5)
         eosp = str(len(msg_parts[0] + msg_parts[1])).zfill(5)
         header = has_nonce + has_ts + eofp + eosp
-        res_msg = header + "".join(msg_parts) + self.get_new_timestamp() + (nonce if nonce is not None else "")
+        res_msg = header + "".join(msg_parts) + PacketOrganiser.get_new_timestamp() + (nonce if nonce is not None else "")
         return res_msg
 
     def getNonce(timestamp):
@@ -76,9 +76,7 @@ class PacketOrganiser(object):
         return str(out_msg) + "," + str(self.last_nonce)
 
     def verifyNonce(self, nonce):
-        if (int(self.last_nonce) == int(nonce)):
-            return True
-        return False
+        return self.last_nonce == nonce
 
     def addTimeStamp(self, out_msg):
         return str(out_msg) + "," + datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")

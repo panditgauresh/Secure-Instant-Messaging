@@ -44,7 +44,7 @@ MSG_RESPONSE_OK = "OK"
 
 USR_CMD_LIST = "LIST"
 USR_CMD_CHAT = "CHAT"
-USR_CMD_RE = "(?P<cmd>[(LIST)(CHAT (?P<user>[a-zA-Z]+))]) (?P<msg>.+)"
+USR_CMD_RE = "((?P<list>LIST)|(?P<chat>CHAT (?P<username>[a-zA-Z]+) (?P<msg>.+)))"
 
 # header: HAS_NONCE, HAS_TS, END_OF_FIRST_PART, END_OF_SECOND_PART
 HEADER_LEN = 12

@@ -18,6 +18,7 @@ class UserInputHandler(object):
         :return:
         """
         # LIST, CHAT
+        msg = msg[:-1]
         match_res = re.match(c.USR_CMD_RE, msg)
         if not match_res:   #Reply from server or chat client
             return None, None

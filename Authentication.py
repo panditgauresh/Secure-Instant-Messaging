@@ -54,12 +54,12 @@ class Authentication(object):
             ind = int(ind)
             k = self.ra.getMaskSize()  # TODO flaw when mask size changed
             if self.ra.challengeComm.isChallengeMatched(k, ind, c_ans) or True:  # TODO for testing
-                dec_dh_pub_client, username, n1 = self.crypto_service.rsa_decrypt(enc_client_msg).split(",")  # TODO decryption, get N1, public key,
+                dec_msg = self.crypto_service.rsa_decrypt(enc_client_msg)
+                dec_dh_pub_client, username, n1 = dec_msg.split(",")  # TODO decryption, get N1, public key,
                 if username in user_addr_dict:  # prevent duplicate login
                     return None
                 self.username = username
                 # dec_dh_pub_client, self.username, n1 = 321321321321321, "admin", "321"  # TODO for testing
-                n1 = int(n1)
                 print(n1)
                 dec_dh_pub_client = int(dec_dh_pub_client)
                 print("Seen DH public key: {}, Username: {}, n1: {}".format(dec_dh_pub_client, self.username, n1))
@@ -89,7 +89,7 @@ class Authentication(object):
                 print("Authentication success.")
                 return enc_msg
             else:
-                print("TimeStamp Incorrect")
+                print("TimeStamp Incorrect: {}".format(timestamp))
 
 
     def is_auth(self):
