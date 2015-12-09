@@ -121,6 +121,7 @@ def run_client(server_ip, server_port):
             if r_addr == server_addr and recv_msg:
                 decrypt_msg = client_auth.crypto_service.sym_decrypt(client_auth.dh_key, recv_msg)
                 #decrypt_msg.split(",")
+                print(decrypt_msg)
                 pending_response.pop("key", None)
                 if recv_msg.startswith(Consts.MSG_HEAD):
                     sys.stdout.write('\r<- {}'.format(recv_msg[2:]))
@@ -150,4 +151,4 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    run_client('192.168.1.2', 9090)
+    run_client('192.168.15.1', 9090)

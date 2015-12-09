@@ -25,6 +25,7 @@ class Authentication(object):
         self.dh_key = 0
         self.username = ""
         self.pw_dict = pw_dict
+        self.masksize = 0
 
     def get_response(self, message):
         pass
@@ -38,9 +39,9 @@ class Authentication(object):
         print("Request received from {}: {}".format(self.addr, request))
         if self.stage == 0:
             # sent a challenge to client
-            chl, ind, k = self.ra.getChallengeTupple()
+            chl, ind, self.masksize = self.ra.getChallengeTupple()
             self.stage = 1
-            return util.format_message(chl, k, ind)
+            return util.format_message(chl, self.masksize, ind)
         elif self.stage == 1:
             # check the challenge answer, decrypt the client DH public key and send DH public key back
             try:
@@ -52,8 +53,8 @@ class Authentication(object):
                 return None
             c_ans = int(c_ans)
             ind = int(ind)
-            k = self.ra.getMaskSize()  # TODO flaw when mask size changed
-            if self.ra.challengeComm.isChallengeMatched(k, ind, c_ans) or True:  # TODO for testing
+            #k = self.ra.getMaskSize()  # TODO flaw when mask size changed
+            if self.ra.challengeComm.isChallengeMatched(self.masksize, ind, c_ans):  # TODO for testing
                 dec_msg = self.crypto_service.rsa_decrypt(enc_client_msg)
                 dec_dh_pub_client, username, n1 = dec_msg.split(",")  # TODO decryption, get N1, public key,
                 if username in user_addr_dict:  # prevent duplicate login

@@ -56,6 +56,8 @@ class ClientAuthentication(object):
         print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
         chl, k, ind = recv_msg.split(",")
         ans = self.ra.compute_answer(chl, k)
+        print("challenge:"+str(chl))
+        print("challenge:"+str(ans))
         dh_pri_key = self.crypto_service.get_dh_pri_key()
         dh_pub_key = self.crypto_service.get_dh_pub_key(dh_pri_key)
         msg = util.format_message(dh_pub_key, username)

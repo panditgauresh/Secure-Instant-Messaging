@@ -53,5 +53,5 @@ TRUE_STR = "1"
 FALSE_STR = "0"
 NONCE_LEN = 8
 TS_LEN = 26
-ERR_CMD = "Command not right. Use List or [Chat <username> <msg>]"
+ERR_CMD = "Command not right. Use LIST or [CHAT <username> <msg>]"
 ERR_CMD_CHAT = "Chat command not right."
