@@ -19,19 +19,23 @@ class PacketOrganiser(object):
         msg_parts = []
         header = pkt[:c.HEADER_LEN]
         pkt = pkt[c.HEADER_LEN:]
-        has_nonce, has_ts, eofp, eosp = re.match(c.PKT_HEADER_RE, header).groups()
-        eofp = int(eofp)
-        eosp = int(eosp)
-        if has_nonce == c.TRUE_STR:
-            nonce = pkt[-c.NONCE_LEN:]
-            pkt = pkt[:-c.NONCE_LEN]
-        if has_ts == c.TRUE_STR:
-            ts = pkt[-c.TS_LEN]
-            pkt = pkt[:-c.TS_LEN]
-        msg_parts.append(pkt[:eofp])
-        msg_parts.append(pkt[eofp:eosp])
-        msg_parts.append(pkt[eosp:])
-        return nonce, ts, msg_parts
+        re_match = re.match(c.PKT_HEADER_RE, header)
+        if re_match:
+            has_nonce, has_ts, eofp, eosp = re_match.groups()
+            eofp = int(eofp)
+            eosp = int(eosp)
+            if has_nonce == c.TRUE_STR:
+                nonce = pkt[-c.NONCE_LEN:]
+                pkt = pkt[:-c.NONCE_LEN]
+            if has_ts == c.TRUE_STR:
+                ts = pkt[-c.TS_LEN:]
+                pkt = pkt[:-c.TS_LEN]
+            msg_parts.append(pkt[:eofp])
+            msg_parts.append(pkt[eofp:eosp])
+            msg_parts.append(pkt[eosp:])
+            return nonce, ts, msg_parts
+        else:
+            return None
 
     @staticmethod
     def prepare_packet(msg_parts, nonce=None):
@@ -54,7 +58,8 @@ class PacketOrganiser(object):
     def getNonce(timestamp):
         return timestamp.rsplit(',', 1)[1]
 
-    def genRandomNumber(self, byte_size):
+    @staticmethod
+    def genRandomNumber(byte_size=c.NONCE_LEN):
         """
 
         :param byte_size: sould be even number
@@ -72,7 +77,7 @@ class PacketOrganiser(object):
         return False
 
     def addNonce(self, out_msg):
-        self.last_nonce = self.genRandomNumber(c.NONCE_LEN)
+        self.last_nonce = PacketOrganiser.genRandomNumber(c.NONCE_LEN)
         return str(out_msg) + "," + str(self.last_nonce)
 
     def verifyNonce(self, nonce):
@@ -92,7 +97,7 @@ class PacketOrganiser(object):
 
     def modifyTimeStamp(self, message, client_auth):
         encrypt_msg = message.rsplit(',',1)[0]
-        decrypt_msg = client_auth.crypto_service.sym_decrypt(encrypt_msg)
+        decrypt_msg = client_auth.crypto_service.sym_decrypt(client_auth.dh_key, encrypt_msg)
         #Todo: Change this method to remove nonce and timestamp in a better way
         msg, ts, nonce = decrypt_msg.rsplit(',')
         out_msg = self.addTimeStamp(msg)

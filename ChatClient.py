@@ -33,15 +33,13 @@ class ListenThread(threading.Thread):
         '''
         Handling user input and sending message to the server.
         '''
-        global knonwn_users
-        global pending_response
-        global packetorg
+        global knonwn_users, pending_response, packetorg, client_auth
         while self.listen:
             # waiting for user input
             user_input = sys.stdin.readline()
             if user_input:
                 # LIST,
-                handler = UserInputHandler.UserInputHandler()
+                handler = UserInputHandler.UserInputHandler(client_auth)
                 type, addr, out_msg = handler.handle_input(user_input, packetorg, known_users,
                                                               self.server_addr)  # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
                 if addr:
@@ -114,14 +112,14 @@ def run_client(server_ip, server_port):
     sys.stdout.write(Consts.PROMPT)
     sys.stdout.flush()
 
-    sock.settimeout(1)
+    # sock.settimeout(1)
 
     while True:
         try:
             # listening to the server and display the message
-            recv_msg, r_addr = sock.recvfrom(1024)
+            recv_msg, r_addr = sock.recvfrom(20480)
             if r_addr == server_addr and recv_msg:
-                decrypt_msg = client_auth.crypto_service.sym_decrypt(recv_msg)
+                decrypt_msg = client_auth.crypto_service.sym_decrypt(client_auth.dh_key, recv_msg)
                 #decrypt_msg.split(",")
                 pending_response.pop("key", None)
                 if recv_msg.startswith(Consts.MSG_HEAD):
@@ -132,7 +130,7 @@ def run_client(server_ip, server_port):
                 pass
 
         except socket.timeout:
-            for key, value in pending_response:
+            for key, value in pending_response.items():
                 if packetorg.hasTimedOut(value):
                     sock.sendto(packetorg.modifyTimeStamp(value, client_auth),server_addr)
             continue
@@ -143,8 +141,7 @@ def run_client(server_ip, server_port):
             print Consts.BYE
             break
             pass
-        finally:
-            sock.close()
+    sock.close()
 
 
 if __name__ == '__main__':

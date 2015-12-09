@@ -22,6 +22,8 @@ class ChattingService(object):
 
     def get_response(self, addr, msg_parts):
         # parse the msg
+        print(addr)
+        print(msg_parts)
         res_msg = None
         msg_type = msg_parts[0]
         if msg_type == c.MSG_TYPE_KEEP_ALIVE:
