@@ -47,7 +47,8 @@ MSG_RESPONSE_OK = "OK"
 
 USR_CMD_LIST = "list"
 USR_CMD_CHAT = "send"
-USR_CMD_RE = "((?P<list>" + USR_CMD_LIST + ")|((?P<chat>" + USR_CMD_CHAT + ") (?P<username>[a-zA-Z0-9]+) (?P<msg>.+)))"
+USR_CMD_LOGOUT = "logout"
+USR_CMD_RE = "((?P<list>" + USR_CMD_LIST + ")|(?P<logout>" + USR_CMD_LOGOUT + ")|((?P<chat>" + USR_CMD_CHAT + ") (?P<username>[a-zA-Z0-9]+) (?P<msg>.+)))"
 
 # header: HAS_NONCE, HAS_TS, END_OF_FIRST_PART, END_OF_SECOND_PART
 HEADER_LEN = 12
@@ -57,5 +58,5 @@ FALSE_STR = "0"
 NONCE_LEN = 8
 TS_LEN = 26
 ERR_CMD = "Command not right. Use LIST or [CHAT <username> <msg>]"
-ERR_CMD_CHAT = "Chat command not right."
+ERR_CMD_CHAT = "Chat command invalid."
 ERR_CMD_NO_USER = "Username doesn't exist!"

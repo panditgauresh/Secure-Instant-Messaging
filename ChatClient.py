@@ -17,16 +17,16 @@ server_auth = None
 active_users = {}  # active user list from server
 addr_auths = {}  # addr : auth
 user_addr_dict = {}  # username : addr
-nonce_auths = {}  # nonce : auth for pre-auth (get TTB from server)
-pending_response = {}
+request_cache = {}  # nonce : [request type, msg, key, auth for pre-auth <get TTB from server> (if any)]
 packetorg = PacketOrganiser()
+
 
 class ListenThread(threading.Thread):
     def __init__(self, sock, saddr):
-        '''
+        """
         sock: socket used for sending message to server
         saddr: server address
-        '''
+        """
         threading.Thread.__init__(self)
         self.sock = sock
         self.listen = True  # flag for terminate the thread
@@ -34,21 +34,19 @@ class ListenThread(threading.Thread):
 
 
     def run(self):
-        '''
+        """
         Handling user input and sending message to the server.
-        '''
-        global user_addr_dict, nonce_auths, pending_response, packetorg, server_auth, active_users
+        """
+        global user_addr_dict, request_cache, packetorg, server_auth, active_users
         while self.listen:
             # waiting for user input
             user_input = sys.stdin.readline()
             packetorg.user_addr_dict = user_addr_dict
             if user_input:
                 # LIST,
-                handler = UserInputHandler(server_auth, user_addr_dict, addr_auths, nonce_auths, active_users)
+                handler = UserInputHandler(server_auth, user_addr_dict, addr_auths, request_cache, active_users)
                 type, addr, out_msg = handler.handle_input(user_input, packetorg)
                 if addr:
-                    if addr == self.server_addr:
-                        pending_response[type] = packetorg.addTimeStamp(out_msg)
                     try:
                         # print("sending msg len: {}".format(len(out_msg)))
                         self.sock.sendto(out_msg, addr)
@@ -68,20 +66,20 @@ class ListenThread(threading.Thread):
                     sys.stdout.flush()
 
     def stop(self):
-        '''
+        """
         Terminate the thread by unsetting the flag.
-        '''
+        """
         sys.stdout.write(Consts.TERM_MSG)
         sys.stdout.flush()
         self.listen = False
 
 
 def run_client(server_ip, server_port):
-    '''
+    """
     Main function to start the client.
     server_ip: IP address of the server
     server_port: port number which server uses to communicate
-    '''
+    """
     global server_auth, user_auths, user_addr_dict, active_users
     g = 2
     p = util.load_df_param_from_file("files/df_param")
@@ -121,60 +119,82 @@ def run_client(server_ip, server_port):
     sys.stdout.flush()
 
     # sock.settimeout(1)
-
     while True:
         try:
             # listening to the server and display the message
             recv_msg, r_addr = sock.recvfrom(20480)
             if r_addr == server_addr and recv_msg:
                 dec_msg = crypto_service.sym_decrypt(server_auth.dh_key, recv_msg)
-                pending_response.pop("key", None)
                 n, msg_ps = PacketOrganiser.process_packet(dec_msg)
                 # first check if it's a client/client authentication
                 # response from server
-                if n in nonce_auths:
-                    # TODO process the auth response from server
-                    cur_auth = nonce_auths.pop(n)
-                    assert isinstance(cur_auth, ClientClientAuthentication)
-                    b_addr = cur_auth.start_authenticate(sock, msg_ps, server_auth.username)
-                    user_addr_dict[cur_auth.username] = b_addr
-                    addr_auths[b_addr] = cur_auth
-                else:
-                    chat_service.process_message(msg_ps)
+                if n in request_cache:
+                    # check the type of request
+                    cache = request_cache[n]
+                    request_type = cache[0]
+                    if request_type == c.MSG_TYPE_LOGOUT:
+                        # process logout confirmation
+                        if msg_ps[0] == c.MSG_RESPONSE_OK:
+                            request_cache.pop(n)
+                            break
+                    elif request_type == c.MSG_TYPE_START_NEW_CHAT:
+                        # process the auth response from server
+                        cur_auth = cache[3]
+                        assert isinstance(cur_auth, ClientClientAuthentication)
+                        b_addr = cur_auth.start_authenticate(sock, msg_ps, server_auth.username)
+                        user_addr_dict[cur_auth.username] = b_addr
+                        addr_auths[b_addr] = cur_auth
+                        request_cache.pop(n)
+                    elif request_type == c.MSG_TYPE_LIST:
+                        chat_service.process_message(msg_ps)
+                        request_cache.pop(n)
             elif r_addr in addr_auths:   #Reply or chat request from client
                 # print("recv msg len: {}".format(len(recv_msg)))
                 cur_auth = addr_auths[r_addr]
+                # dec_key = cur_auth.dh_key if cur_auth.auth_success else cur_auth.ab_key
                 dec_msg = crypto_service.sym_decrypt(cur_auth.dh_key, recv_msg)
                 n, dec_msg_parts = PacketOrganiser.process_packet(dec_msg)
-
-
                 type = dec_msg_parts[0]
-                if type == c.MSG_RESPONSE_OK:
 
-                    # verify nonce
-                    if n != cur_auth.last_nonce:
-                        continue
-                    if not cur_auth.complete_auth():
-                        # deal with peer auth success msg
-                        cur_auth.auth_success = True
+                if cur_auth.auth_success:
+                    if type == c.MSG_RESPONSE_OK:
+                        if n in request_cache:
+                            cache = request_cache[n]
+                            request_type = cache[0]
+                            if request_type == c.MSG_TYPE_MSG:
+                                request_cache.pop(n)
+                                continue
+
+                    elif type == c.MSG_TYPE_MSG:
+                        # display user message
                         util.display_user_message(dec_msg_parts[1], cur_auth.username)
-                    else:
-                        # TODO deal with msg confirm
-                        pass
-                elif type == c.MSG_TYPE_MSG:
-                    # display user message
-                    util.display_user_message(dec_msg_parts[1], cur_auth.username)
-                elif type == c.MSG_TYPE_PUB_KEY:
-                    # finish peer authentication on Alice side
-                    b_pub_key = int(dec_msg_parts[1])
-                    cur_auth.dh_key = crypto_service.get_dh_secret(cur_auth.pri_key, b_pub_key)
-                    cur_auth.auth_success = True
-                    cur_auth.last_nonce = n
-                    # send confirmation and first message to Bob
-                    conf_msg_parts = [c.MSG_RESPONSE_OK, cur_auth.first_msg, ""]
-                    conf_msg = PacketOrganiser.prepare_packet(conf_msg_parts, n)
-                    enc_conf_msg = crypto_service.sym_encrypt(cur_auth.dh_key, conf_msg)
-                    sock.sendto(enc_conf_msg, r_addr)
+                        # send message confirmation back
+
+                else:
+                    if type == c.MSG_RESPONSE_OK:
+                        if n in request_cache:
+                            cache = request_cache[n]
+                            request_type = cache[0]
+                            if request_type == c.MSG_TYPE_PUB_KEY:
+                                # verify nonce
+                                if n != cur_auth.last_nonce:
+                                    continue
+                                else:
+                                    # deal with peer auth success msg
+                                    cur_auth.auth_success = True
+                                    request_cache.pop(n)
+                                    util.display_user_message(dec_msg_parts[1], cur_auth.username)
+                    elif type == c.MSG_TYPE_PUB_KEY:
+                        # finish peer authentication on Alice side
+                        b_pub_key = int(dec_msg_parts[1])
+                        cur_auth.dh_key = crypto_service.get_dh_secret(cur_auth.pri_key, b_pub_key)
+                        cur_auth.auth_success = True
+                        cur_auth.last_nonce = n
+                        # send confirmation and first message to Bob
+                        conf_msg_parts = [c.MSG_RESPONSE_OK, cur_auth.first_msg, ""]
+                        conf_msg = PacketOrganiser.prepare_packet(conf_msg_parts, n)
+                        enc_conf_msg = crypto_service.sym_encrypt(cur_auth.dh_key, conf_msg)
+                        sock.sendto(enc_conf_msg, r_addr)
 
             else: # TODO the r_addr not in user_addr_dict, this can be a TTB, a DDOS weakness?
                 _, msg_ps = PacketOrganiser.process_packet(recv_msg)
@@ -198,7 +218,7 @@ def run_client(server_ip, server_port):
                 pri_key = crypto_service.get_dh_pri_key()
                 pub_key = crypto_service.get_dh_pub_key(pri_key)
                 new_auth.dh_key = crypto_service.get_dh_secret(pri_key, int(a_pub_key))
-                nonce = util.get_good_nonce(nonce_auths)
+                nonce = util.get_good_nonce(request_cache)
                 new_auth.last_nonce = nonce
                 # send pub key to a
                 msg_parts = [c.MSG_TYPE_PUB_KEY, pub_key, ""]
@@ -208,21 +228,23 @@ def run_client(server_ip, server_port):
                 # add new auth to dict
                 addr_auths[a_addr] = new_auth
                 user_addr_dict[a_username] = a_addr
+                request_cache[nonce] = [c.MSG_TYPE_PUB_KEY, k_ab, plain_msg]  # add to request cache
 
         except socket.timeout:
-            for key, value in pending_response.items():
-                if packetorg.hasTimedOut(value):
-                    sock.sendto(packetorg.modifyTimeStamp(value, server_auth), server_addr)
+            # TODO packet resend
             continue
         except KeyboardInterrupt:
             # when seeing ctrl-c terminate the client
             t.stop()
             t.join()
             print c.BYE
-            break
-            pass
+            server_auth.logout(sock)
+            sock.close()
+    t.stop()
+    t.join()
+    print c.BYE
+    server_auth.logout(sock)
     sock.close()
-
 
 if __name__ == '__main__':
     # parser = argparse.ArgumentParser()

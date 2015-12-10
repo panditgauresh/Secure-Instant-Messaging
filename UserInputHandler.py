@@ -11,11 +11,11 @@ import Utilities as util
 
 class UserInputHandler(object):
 
-    def __init__(self, server_auth, user_addr_dict, addr_auths, nonce_auths, active_users):
+    def __init__(self, server_auth, user_addr_dict, addr_auths, request_cache, active_users):
         self.auth = server_auth
         self.user_addr_dict = user_addr_dict
         self.addr_auths = addr_auths
-        self.nonce_auths = nonce_auths
+        self.request_cache = request_cache
         self.active_users = active_users
         self.serv = CryptoService()
 
@@ -31,10 +31,16 @@ class UserInputHandler(object):
         if not match_res:   #Reply from server or chat client
             return None, None, c.ERR_CMD_CHAT
         if msg == c.USR_CMD_LIST:
-            nonce = util.get_good_nonce({}) # TODO need to change to actual nonce dict
+            nonce = util.get_good_nonce(self.request_cache)
             res_msg = PacketOrganiser.prepare_packet(c.MSG_TYPE_LIST, nonce)
-            # ts_msg = packetorg.addTimeStamp(msg)
+            self.request_cache[nonce] = [c.MSG_TYPE_LIST, self.auth.dh_key, res_msg]  # add to cache
             return c.MSG_TYPE_LIST, self.auth.server_addr, self.serv.sym_encrypt(self.auth.dh_key, res_msg)
+        elif msg == c.USR_CMD_LOGOUT:
+            # handle logout
+            nonce = util.get_good_nonce(self.request_cache)
+            res_msg = PacketOrganiser.prepare_packet(c.MSG_TYPE_LOGOUT, nonce)
+            self.request_cache[nonce] = [c.MSG_TYPE_LOGOUT, self.auth.dh_key, res_msg]  # add to cache
+            return c.MSG_TYPE_LOGOUT, self.auth.server_addr, self.serv.sym_encrypt(self.auth.dh_key, res_msg)
         elif match_res.group("chat") == c.USR_CMD_CHAT:
             username = match_res.group("username")
             chat_msg = match_res.group("msg")
@@ -43,18 +49,19 @@ class UserInputHandler(object):
                 addr = self.user_addr_dict[username]
                 auth = self.addr_auths[addr]
                 key = auth.dh_key
-                nonce = PacketOrganiser.genRandomNumber()  # TODO add nonce to some nonce dict
+                nonce = util.get_good_nonce(self.request_cache)
                 auth.last_nonce = nonce
                 msg_to_send = PacketOrganiser.prepare_packet([c.MSG_TYPE_MSG, chat_msg, ""], nonce=nonce)
+                self.request_cache[nonce] = [c.MSG_TYPE_MSG, key, msg_to_send]  # add to cache
                 return None, addr, self.serv.sym_encrypt(key, msg_to_send)
             elif username in self.active_users:
                 # start peer authentication
-                nonce = PacketOrganiser.genRandomNumber()
-                while nonce in self.nonce_auths:   # avoid key conflict
-                    nonce = PacketOrganiser.genRandomNumber()
-                self.nonce_auths[nonce] = ClientClientAuthentication(username, self.auth.crypto_service, chat_msg)
+                nonce = util.get_good_nonce(self.request_cache)
+                new_auth = ClientClientAuthentication(username, self.auth.crypto_service, chat_msg)
+                new_auth.timestamp = PacketOrganiser.get_new_timestamp()  # timestamp when created, for packet resend
                 key = self.auth.dh_key
                 msg_to_send = PacketOrganiser.prepare_packet([c.MSG_TYPE_START_NEW_CHAT, username, ""], nonce=nonce)
+                self.request_cache[nonce] = [c.MSG_TYPE_START_NEW_CHAT, key, msg_to_send, new_auth]  # add request to cache for resend
                 return username, self.auth.server_addr, self.serv.sym_encrypt(key, msg_to_send)
             else:
                 return None, None, c.ERR_CMD_NO_USER

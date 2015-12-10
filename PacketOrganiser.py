@@ -10,7 +10,8 @@ class PacketOrganiser(object):
     @staticmethod
     def process_packet(pkt):
         """
-
+        packet struct: header, msg, nonce, timestamp
+        header: has_ts(1), has_nonce(1), end of first part(5), end of second part(5)
         :param pkt:
         :return:
         """
@@ -21,15 +22,15 @@ class PacketOrganiser(object):
         pkt = pkt[c.HEADER_LEN:]
         re_match = re.match(c.PKT_HEADER_RE, header)
         if re_match:
-            has_nonce, has_ts, eofp, eosp = re_match.groups()
+            has_ts, has_nonce, eofp, eosp = re_match.groups()
             eofp = int(eofp)
             eosp = int(eosp)
-            if has_nonce == c.TRUE_STR:
-                nonce = pkt[-c.NONCE_LEN:]
-                pkt = pkt[:-c.NONCE_LEN]
             if has_ts == c.TRUE_STR:
                 ts = pkt[-c.TS_LEN:]
                 pkt = pkt[:-c.TS_LEN]
+            if has_nonce == c.TRUE_STR:
+                nonce = pkt[-c.NONCE_LEN:]
+                pkt = pkt[:-c.NONCE_LEN]
             msg_parts.append(pkt[:eofp])
             msg_parts.append(pkt[eofp:eosp])
             msg_parts.append(pkt[eosp:])
@@ -43,6 +44,8 @@ class PacketOrganiser(object):
     def prepare_packet(msg_parts, nonce=None):
         """
         Add nonce, timestamp and header to the message
+        packet struct: header, msg, nonce, timestamp
+        header: has_ts(1), has_nonce(1), end of first part(5), end of second part(5)
         :param msg_parts: no more than three msg parts can be handled
         :param nonce:
         :return:
@@ -56,8 +59,8 @@ class PacketOrganiser(object):
         has_nonce = c.TRUE_STR if nonce is not None else c.FALSE_STR
         eofp = str(len(msg_parts[0])).zfill(5)
         eosp = str(len(msg_parts[0] + msg_parts[1])).zfill(5)
-        header = has_nonce + has_ts + eofp + eosp
-        res_msg = header + "".join(msg_parts) + PacketOrganiser.get_new_timestamp() + (nonce if nonce is not None else "")
+        header = has_ts + has_nonce + eofp + eosp
+        res_msg = header + "".join(msg_parts) + (nonce if nonce is not None else "") + PacketOrganiser.get_new_timestamp()
         return res_msg
 
     def getNonce(timestamp):

@@ -5,7 +5,7 @@ import Utilities as util
 import Consts as c
 import socket
 import sys
-import PacketOrganiser
+from PacketOrganiser import PacketOrganiser
 
 class ClientServerAuthentication(object):
     """
@@ -26,7 +26,7 @@ class ClientServerAuthentication(object):
         self.dh_key = 0
         self.server_addr = remote_addr
         self.auth_success = False
-        self.packetgen = PacketOrganiser.PacketOrganiser()
+        self.packetgen = PacketOrganiser()
         self.username = None
 
     def start_authenticate(self, sock):
@@ -103,8 +103,10 @@ class ClientServerAuthentication(object):
             print("Sign verification failed.")
         return self.auth_success, c.SUCCESS
 
-    def get_response(self, message):
-        pass
-
     def is_auth(self):
         return self.auth_success
+
+    def logout(self, sock):
+        msg = PacketOrganiser.prepare_packet(c.MSG_TYPE_LOGOUT)
+        enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
+        sock.sendto(enc_msg, self.server_addr)
