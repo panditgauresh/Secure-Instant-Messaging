@@ -161,13 +161,16 @@ def run_client(server_ip, server_port):
     chat_service = ClientChattingService(active_users, server_auth)
 
     # start a background to handle user input
-    t = ListenThread(sock, server_addr)
-    t.start()
+    t_listen = ListenThread(sock, server_addr)
+    t_listen.start()
+
+    # start a background to resend message
+    t_resend = ResendThread(sock, request_cache)
+    t_resend.start()
 
     sys.stdout.write(Consts.PROMPT)
     sys.stdout.flush()
 
-    # sock.settimeout(1)
     while True:
         try:
             # listening to the server and display the message
@@ -279,18 +282,19 @@ def run_client(server_ip, server_port):
                 user_addr_dict[a_username] = a_addr
                 util.add_to_request_cache(request_cache, nonce, c.MSG_TYPE_PUB_KEY, k_ab, plain_msg, a_addr) # add to request cache
 
-        except socket.timeout:
-            # TODO packet resend
-            continue
         except KeyboardInterrupt:
             # when seeing ctrl-c terminate the client
-            t.stop()
-            t.join()
+            t_listen.stop()
+            t_listen.join()
+            t_resend.stop()
+            t_resend.join()
             print c.BYE
             server_auth.logout(sock)
             sock.close()
-    t.stop()
-    t.join()
+    t_listen.stop()
+    t_listen.join()
+    t_resend.stop()
+    t_resend.join()
     print c.BYE
     server_auth.logout(sock)
     sock.close()
