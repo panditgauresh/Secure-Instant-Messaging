@@ -33,13 +33,15 @@ class UserInputHandler(object):
         if msg == c.USR_CMD_LIST:
             nonce = util.get_good_nonce(self.request_cache)
             res_msg = PacketOrganiser.prepare_packet(c.MSG_TYPE_LIST, nonce)
-            self.request_cache[nonce] = [c.MSG_TYPE_LIST, self.auth.dh_key, res_msg]  # add to cache
+            util.add_to_request_cache(self.request_cache, nonce, c.MSG_TYPE_LIST,
+                                      self.auth.dh_key, res_msg, self.auth.server_addr) # add to cache
             return c.MSG_TYPE_LIST, self.auth.server_addr, self.serv.sym_encrypt(self.auth.dh_key, res_msg)
         elif msg == c.USR_CMD_LOGOUT:
             # handle logout
             nonce = util.get_good_nonce(self.request_cache)
             res_msg = PacketOrganiser.prepare_packet(c.MSG_TYPE_LOGOUT, nonce)
-            self.request_cache[nonce] = [c.MSG_TYPE_LOGOUT, self.auth.dh_key, res_msg]  # add to cache
+            util.add_to_request_cache(self.request_cache, nonce, c.MSG_TYPE_LOGOUT,
+                                      self.auth.dh_key, res_msg, self.auth.server_addr) # add to cache
             return c.MSG_TYPE_LOGOUT, self.auth.server_addr, self.serv.sym_encrypt(self.auth.dh_key, res_msg)
         elif match_res.group("chat") == c.USR_CMD_CHAT:
             username = match_res.group("username")
@@ -52,7 +54,8 @@ class UserInputHandler(object):
                 nonce = util.get_good_nonce(self.request_cache)
                 auth.last_nonce = nonce
                 msg_to_send = PacketOrganiser.prepare_packet([c.MSG_TYPE_MSG, chat_msg, ""], nonce=nonce)
-                self.request_cache[nonce] = [c.MSG_TYPE_MSG, key, msg_to_send]  # add to cache
+                util.add_to_request_cache(self.request_cache, nonce, c.MSG_TYPE_MSG,
+                                      key, msg_to_send, addr) # add to cache
                 return None, addr, self.serv.sym_encrypt(key, msg_to_send)
             elif username in self.active_users:
                 # start peer authentication
@@ -61,7 +64,8 @@ class UserInputHandler(object):
                 new_auth.timestamp = PacketOrganiser.get_new_timestamp()  # timestamp when created, for packet resend
                 key = self.auth.dh_key
                 msg_to_send = PacketOrganiser.prepare_packet([c.MSG_TYPE_START_NEW_CHAT, username, ""], nonce=nonce)
-                self.request_cache[nonce] = [c.MSG_TYPE_START_NEW_CHAT, key, msg_to_send, new_auth]  # add request to cache for resend
+                util.add_to_request_cache(self.request_cache, nonce, c.MSG_TYPE_START_NEW_CHAT,
+                                      key, msg_to_send, self.auth.server_addr, new_auth) # add to cache
                 return username, self.auth.server_addr, self.serv.sym_encrypt(key, msg_to_send)
             else:
                 return None, None, c.ERR_CMD_NO_USER

@@ -76,14 +76,18 @@ class PacketOrganiser(object):
         return os.urandom(byte_size / 2).encode('hex')
 
     @staticmethod
-    def isValidTimeStamp(timestamp):
-        recvTime = datetime.datetime.strptime(timestamp, "%m:%d:%Y:%H:%M:%S:%f")
-        timeNow = datetime.datetime.now()
-        diff = timeNow - recvTime
+    def isValidTimeStamp(timestamp, micro_s=100000):
+        diff = PacketOrganiser.get_time_diff_from_now(timestamp)
         # print("ts: {}, now: {}, diff: {}".format(recvTime, timeNow, diff))
-        if (diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=100000)):
+        if (diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=micro_s)):
             return True
         return False
+
+    @staticmethod
+    def get_time_diff_from_now(timestamp):
+        recvTime = datetime.datetime.strptime(timestamp, "%m:%d:%Y:%H:%M:%S:%f")
+        timeNow = datetime.datetime.now()
+        return timeNow - recvTime
 
     def addNonce(self, out_msg):
         self.last_nonce = PacketOrganiser.genRandomNumber(c.NONCE_LEN)

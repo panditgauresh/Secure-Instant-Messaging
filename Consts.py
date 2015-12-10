@@ -60,3 +60,14 @@ TS_LEN = 26
 ERR_CMD = "Command not right. Use LIST or [CHAT <username> <msg>]"
 ERR_CMD_CHAT = "Chat command invalid."
 ERR_CMD_NO_USER = "Username doesn't exist!"
+
+CACHE_TYPE_IND = 0
+CACHE_KEY_IND = 1
+CACHE_MSG_IND = 2
+CACHE_ADDR_IND = 3
+CACHE_TS_IND = 4
+CACHE_AUTH_IND = 5
+
+TS_VALID_MICRO_SEC = 100000
+TS_RESEND_MICRO_SEC = 1000000
+RESEND_SLEEP_SEC = 2

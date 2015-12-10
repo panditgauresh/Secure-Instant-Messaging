@@ -12,12 +12,13 @@ import Consts as c
 from UserInputHandler import UserInputHandler
 from PacketOrganiser import PacketOrganiser
 from ClientChattingService import ClientChattingService
+import time
 
 server_auth = None
 active_users = {}  # active user list from server
 addr_auths = {}  # addr : auth
 user_addr_dict = {}  # username : addr
-request_cache = {}  # nonce : [request type, msg, key, auth for pre-auth <get TTB from server> (if any)]
+request_cache = {}  # nonce : [request type, msg, key, addr, ts, auth for pre-auth <get TTB from server> (if any)]
 packetorg = PacketOrganiser()
 
 
@@ -72,6 +73,54 @@ class ListenThread(threading.Thread):
         sys.stdout.write(Consts.TERM_MSG)
         sys.stdout.flush()
         self.listen = False
+
+
+class ResendThread(threading.Thread):
+    """
+    Thread for message resending.
+    """
+    def __init__(self, sock, request_cache):
+        """
+        sock: socket used for sending message to server
+        saddr: server address
+        """
+        threading.Thread.__init__(self)
+        self.sock = sock
+        self.resending = True  # flag for terminate the thread
+        self.request_cache = request_cache
+
+
+    def run(self):
+        """
+        Handling user input and sending message to the server.
+        """
+        while self.resending:
+            time.sleep(c.RESEND_SLEEP_SEC)
+            for cache in self.request_cache:
+                ts = cache[c.CACHE_TS_IND]
+                if not PacketOrganiser.isValidTimeStamp(ts, c.TS_RESEND_MICRO_SEC):
+                    self.resend(cache)
+
+    def resend(self, cache):
+        """
+
+        :param cache:
+        :return:
+        """
+        global server_auth
+        ts = PacketOrganiser.get_new_timestamp()
+        cache[c.CACHE_TS_IND] = ts
+        msg = util.replace_ts_in_msg(cache[c.CACHE_MSG_IND])
+        enc_msg = server_auth.crypto_service.sym_encrypt(cache[c.CACHE_KEY_IND], msg)
+        self.sock.sendto(enc_msg, cache[c.CACHE_ADDR_IND])
+
+    def stop(self):
+        """
+        Terminate the thread by unsetting the flag.
+        """
+        sys.stdout.write(Consts.TERM_MSG)
+        sys.stdout.flush()
+        self.resending = False
 
 
 def run_client(server_ip, server_port):
@@ -131,7 +180,7 @@ def run_client(server_ip, server_port):
                 if n in request_cache:
                     # check the type of request
                     cache = request_cache[n]
-                    request_type = cache[0]
+                    request_type = cache[c.CACHE_TYPE_IND]
                     if request_type == c.MSG_TYPE_LOGOUT:
                         # process logout confirmation
                         if msg_ps[0] == c.MSG_RESPONSE_OK:
@@ -139,7 +188,7 @@ def run_client(server_ip, server_port):
                             break
                     elif request_type == c.MSG_TYPE_START_NEW_CHAT:
                         # process the auth response from server
-                        cur_auth = cache[3]
+                        cur_auth = cache[c.CACHE_AUTH_IND]
                         assert isinstance(cur_auth, ClientClientAuthentication)
                         b_addr = cur_auth.start_authenticate(sock, msg_ps, server_auth.username)
                         user_addr_dict[cur_auth.username] = b_addr
@@ -160,7 +209,7 @@ def run_client(server_ip, server_port):
                     if type == c.MSG_RESPONSE_OK:
                         if n in request_cache:
                             cache = request_cache[n]
-                            request_type = cache[0]
+                            request_type = cache[c.CACHE_TYPE_IND]
                             if request_type == c.MSG_TYPE_MSG:
                                 request_cache.pop(n)
                                 continue
@@ -174,7 +223,7 @@ def run_client(server_ip, server_port):
                     if type == c.MSG_RESPONSE_OK:
                         if n in request_cache:
                             cache = request_cache[n]
-                            request_type = cache[0]
+                            request_type = cache[c.CACHE_TYPE_IND]
                             if request_type == c.MSG_TYPE_PUB_KEY:
                                 # verify nonce
                                 if n != cur_auth.last_nonce:
@@ -228,7 +277,7 @@ def run_client(server_ip, server_port):
                 # add new auth to dict
                 addr_auths[a_addr] = new_auth
                 user_addr_dict[a_username] = a_addr
-                request_cache[nonce] = [c.MSG_TYPE_PUB_KEY, k_ab, plain_msg]  # add to request cache
+                util.add_to_request_cache(request_cache, nonce, c.MSG_TYPE_PUB_KEY, k_ab, plain_msg, a_addr) # add to request cache
 
         except socket.timeout:
             # TODO packet resend
