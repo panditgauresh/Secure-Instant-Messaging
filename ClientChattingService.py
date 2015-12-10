@@ -52,4 +52,7 @@ class ClientChattingService(object):
         for u in users:
             if u != self.server_auth.username:
                 self.active_users[u] = 1
-        return "\rOnline users:\n" + "\n".join(self.active_users.keys()) + "\n"
+        res_str = "\rOnline users:\n" + "\n".join(self.active_users.keys())
+        if len(self.active_users) > 0:
+            res_str += "\n"
+        return res_str

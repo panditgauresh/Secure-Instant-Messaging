@@ -86,7 +86,6 @@ def run_client(server_ip, server_port):
     g = 2
     p = util.load_df_param_from_file("files/df_param")
     crypto_service = CryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)
-    # crypto_service = FakeCryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)   # TODO for test
 
     server_addr = (server_ip, server_port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -182,7 +181,7 @@ def run_client(server_ip, server_port):
                 signed_ttb, enc_inside_msg, _ = msg_ps
                 ttb = signed_ttb[:-512]
                 sign = signed_ttb[-512:]
-                if not crypto_service.rsa_verify(ttb, sign):  # TODO for testing
+                if not crypto_service.rsa_verify(ttb, sign):
                     raise Exception("Ticket To B corrupted!")
                 dec_ttb = crypto_service.sym_decrypt(server_auth.dh_key, ttb)
                 _, ttb_parts = PacketOrganiser.process_packet(dec_ttb)  # a_username, a_addr, k_ab
