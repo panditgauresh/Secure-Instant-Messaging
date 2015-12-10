@@ -20,6 +20,7 @@ PUB_KEY_PATH = 'keys/key_server.pub'
 PRI_KEY_PATH = 'keys/key_server'
 P_TEXT_LEN_4096 = 470
 C_TEXT_LEN_4096 = 512
+SIGN_LEN = 512
 
 DH_PRIME_SIZE = 2048
 DH_KEY_SIZE = 512
@@ -40,12 +41,13 @@ MSG_TYPE_LIST = "LIST"
 MSG_TYPE_START_NEW_CHAT = "CHAT"
 MSG_TYPE_LOGOUT = "LOGOUT"
 MSG_TYPE_MSG = "MESSAGE"
+MSG_TYPE_PUB_KEY = "PUB_KEY"
 
 MSG_RESPONSE_OK = "OK"
 
-USR_CMD_LIST = "LIST"
-USR_CMD_CHAT = "CHAT"
-USR_CMD_RE = "((?P<list>LIST)|((?P<chat>CHAT) (?P<username>[a-zA-Z0-9]+) (?P<msg>.+)))"
+USR_CMD_LIST = "list"
+USR_CMD_CHAT = "send"
+USR_CMD_RE = "((?P<list>" + USR_CMD_LIST + ")|((?P<chat>" + USR_CMD_CHAT + ") (?P<username>[a-zA-Z0-9]+) (?P<msg>.+)))"
 
 # header: HAS_NONCE, HAS_TS, END_OF_FIRST_PART, END_OF_SECOND_PART
 HEADER_LEN = 12

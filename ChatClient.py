@@ -46,18 +46,16 @@ class ListenThread(threading.Thread):
                 # LIST,
                 handler = UserInputHandler(server_auth, user_addr_dict, addr_auths, nonce_auths, active_users)
                 type, addr, out_msg = handler.handle_input(user_input, packetorg)
-                # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
                 if addr:
                     if addr == self.server_addr:
                         pending_response[type] = packetorg.addTimeStamp(out_msg)
                     try:
+                        # print("sending msg len: {}".format(len(out_msg)))
                         self.sock.sendto(out_msg, addr)
                     except socket.error:
-                        print Consts.FAIL_SEND
-                        pass
+                        print c.FAIL_SEND
                     sys.stdout.write(Consts.PROMPT)
                     sys.stdout.flush()
-                    print(active_users)
                 elif out_msg:
                     sys.stdout.write(out_msg)
                     sys.stdout.write("\n")
@@ -132,30 +130,85 @@ def run_client(server_ip, server_port):
             if r_addr == server_addr and recv_msg:
                 dec_msg = crypto_service.sym_decrypt(server_auth.dh_key, recv_msg)
                 pending_response.pop("key", None)
-                n, ts, msg_ps = PacketOrganiser.process_packet(dec_msg)
-                if PacketOrganiser.isValidTimeStamp(ts):  # TODO for testing
-                    # first check if it's a client/client authentication
-                    # response from server
-                    if n in nonce_auths:
-                        # TODO process the auth response from server
-                        cur_auth = nonce_auths.pop(n)
-                        assert isinstance(cur_auth, ClientClientAuthentication)
-                        b_addr = cur_auth.start_authenticate(sock, msg_ps)
-                        addr_auths[b_addr] = cur_auth
-
-                    else:
-                        chat_service.process_message(msg_ps)
+                n, msg_ps = PacketOrganiser.process_packet(dec_msg)
+                # first check if it's a client/client authentication
+                # response from server
+                if n in nonce_auths:
+                    # TODO process the auth response from server
+                    cur_auth = nonce_auths.pop(n)
+                    assert isinstance(cur_auth, ClientClientAuthentication)
+                    b_addr = cur_auth.start_authenticate(sock, msg_ps, server_auth.username)
+                    user_addr_dict[cur_auth.username] = b_addr
+                    addr_auths[b_addr] = cur_auth
                 else:
-                    print("Time stamp invalid!")
-                # if recv_msg.startswith(Consts.MSG_HEAD):
-                #     sys.stdout.write('\r<- {}'.format(recv_msg[2:]))
-                #     sys.stdout.write(Consts.PROMPT)
-                #     sys.stdout.flush()
-            elif r_addr in user_addr_dict:   #Reply or chat request from client
-                dh_key = user_auths[user_addr_dict[r_addr]][1]
-                decrypt_msg = crypto_service.sym_decrypt(dh_key, recv_msg)
+                    chat_service.process_message(msg_ps)
+            elif r_addr in addr_auths:   #Reply or chat request from client
+                # print("recv msg len: {}".format(len(recv_msg)))
+                cur_auth = addr_auths[r_addr]
+                dec_msg = crypto_service.sym_decrypt(cur_auth.dh_key, recv_msg)
+                n, dec_msg_parts = PacketOrganiser.process_packet(dec_msg)
 
-                pass
+
+                type = dec_msg_parts[0]
+                if type == c.MSG_RESPONSE_OK:
+
+                    # verify nonce
+                    if n != cur_auth.last_nonce:
+                        continue
+                    if not cur_auth.complete_auth():
+                        # deal with peer auth success msg
+                        cur_auth.auth_success = True
+                        util.display_user_message(dec_msg_parts[1], cur_auth.username)
+                    else:
+                        # TODO deal with msg confirm
+                        pass
+                elif type == c.MSG_TYPE_MSG:
+                    # display user message
+                    util.display_user_message(dec_msg_parts[1], cur_auth.username)
+                elif type == c.MSG_TYPE_PUB_KEY:
+                    # finish peer authentication on Alice side
+                    b_pub_key = int(dec_msg_parts[1])
+                    cur_auth.dh_key = crypto_service.get_dh_secret(cur_auth.pri_key, b_pub_key)
+                    cur_auth.auth_success = True
+                    cur_auth.last_nonce = n
+                    # send confirmation and first message to Bob
+                    conf_msg_parts = [c.MSG_RESPONSE_OK, cur_auth.first_msg, ""]
+                    conf_msg = PacketOrganiser.prepare_packet(conf_msg_parts, n)
+                    enc_conf_msg = crypto_service.sym_encrypt(cur_auth.dh_key, conf_msg)
+                    sock.sendto(enc_conf_msg, r_addr)
+
+            else: # TODO the r_addr not in user_addr_dict, this can be a TTB, a DDOS weakness?
+                _, msg_ps = PacketOrganiser.process_packet(recv_msg)
+                signed_ttb, enc_inside_msg, _ = msg_ps
+                ttb = signed_ttb[:-512]
+                sign = signed_ttb[-512:]
+                if not crypto_service.rsa_verify(ttb, sign):  # TODO for testing
+                    raise Exception("Ticket To B corrupted!")
+                dec_ttb = crypto_service.sym_decrypt(server_auth.dh_key, ttb)
+                _, ttb_parts = PacketOrganiser.process_packet(dec_ttb)  # a_username, a_addr, k_ab
+                a_username_ttb, a_addr, k_ab = ttb_parts
+                a_addr = util.str_to_addr(a_addr)
+                # decrypt inside message with k_ab
+                dec_inside_msg = crypto_service.sym_decrypt(k_ab, enc_inside_msg)
+                _, inside_msg_parts = PacketOrganiser.process_packet(dec_inside_msg)
+                a_username, a_pub_key, _ = inside_msg_parts
+                # print("username_ttb: {}, a_username: {}".format(a_username_ttb, a_username))
+                if a_username_ttb != a_username:
+                    raise Exception("Username not match in the TTB!")
+                new_auth = ClientClientAuthentication(a_username, crypto_service)
+                pri_key = crypto_service.get_dh_pri_key()
+                pub_key = crypto_service.get_dh_pub_key(pri_key)
+                new_auth.dh_key = crypto_service.get_dh_secret(pri_key, int(a_pub_key))
+                nonce = util.get_good_nonce(nonce_auths)
+                new_auth.last_nonce = nonce
+                # send pub key to a
+                msg_parts = [c.MSG_TYPE_PUB_KEY, pub_key, ""]
+                plain_msg = PacketOrganiser.prepare_packet(msg_parts, nonce)
+                enc_msg = crypto_service.sym_encrypt(k_ab, plain_msg)
+                sock.sendto(enc_msg, a_addr)
+                # add new auth to dict
+                addr_auths[a_addr] = new_auth
+                user_addr_dict[a_username] = a_addr
 
         except socket.timeout:
             for key, value in pending_response.items():
@@ -166,7 +219,7 @@ def run_client(server_ip, server_port):
             # when seeing ctrl-c terminate the client
             t.stop()
             t.join()
-            print Consts.BYE
+            print c.BYE
             break
             pass
     sock.close()
@@ -178,5 +231,5 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    # run_client('192.168.125.1', 9090)
-    run_client('10.102.57.249', 9090)
+    run_client('192.168.1.9', 9090)
+    # run_client('10.102.57.249', 9090)

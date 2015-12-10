@@ -15,34 +15,47 @@ class ClientClientAuthentication(object):
         2 : new key established
     """
 
-    def __init__(self, username, crypto_service, first_msg):
+    def __init__(self, username, crypto_service, first_msg=None):
         assert isinstance(crypto_service, CryptoService)
         self.crypto_service = crypto_service
         self.timestamp = time.time()
         self.ra = RequestAuthority.RequestAuthority()
         self.stage = 0
         self.dh_key = 0
-        self.server_addr = None
+        self.pri_key = 0
         self.auth_success = False
         self.packetgen = PacketOrganiser()
         self.first_msg = first_msg  # message initialize the C/C authentication
         self.last_nonce = None
-        self.username = None
+        self.username = username
 
-    def start_authenticate(self, sock, auth_info):
+    def complete_auth(self):
+        return self.auth_success
+
+    def start_authenticate(self, sock, auth_info, a_username):
         """
 
         :param sock:
         :param auth_info: [b_addr, k_ab, ttb]
         :return:
         """
-        # TODO to be continued
-        # addr = tuple(auth_info[0].split(":"))
-        # message = self.server_addr + self.ra.addTimeStamp(message)
-        # encrypt_msg = self.crypto_service.sym_decrypt(auth_info[1],message)#auth_info[1])
-        # print(auth_info)
-        # sock.sendto()
-        pass
+        b_addr = util.str_to_addr(auth_info[0])
+        k_ab = auth_info[1]
+        ttb = auth_info[2]
+
+        # ttb, k_ab{a, pub_key, ts}
+        self.pri_key = self.crypto_service.get_dh_pri_key()
+        self.dh_key = k_ab
+        pub_key = self.crypto_service.get_dh_pub_key(self.pri_key)
+        inside_msg_parts = [a_username, pub_key, ""]
+        inside_msg = PacketOrganiser.prepare_packet(inside_msg_parts)
+        enc_inside_msg = self.crypto_service.sym_encrypt(k_ab, inside_msg)
+
+        msg_parts = [ttb, enc_inside_msg, ""]
+        pack_to_send = PacketOrganiser.prepare_packet(msg_parts)
+        # send the hello message to the other client
+        sock.sendto(pack_to_send, b_addr)
+        return b_addr
 
     def handle_auth_request_from_client(self, sock):
         """

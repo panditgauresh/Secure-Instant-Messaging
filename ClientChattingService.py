@@ -24,7 +24,6 @@ class ClientChattingService(object):
         type = msg_parts[0]
         res_to_print = None
         if type == c.MSG_TYPE_LIST:
-            # self.active_users.append(msg_parts[1])
             res_to_print = self.process_user_list(msg_parts[1])
         elif type == c.MSG_TYPE_MSG:
             res_to_print = self.parse_user_message(msg_parts[1], username)

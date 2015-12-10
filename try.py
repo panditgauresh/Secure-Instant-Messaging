@@ -6,7 +6,7 @@ pub_path = 'keys/key_server.pub'
 #     pub_str = f.read().replace('\n', '')
 # print(pub_str.encode('hex'))
 #
-# pri_path = 'keys/key_server_copy'
+pri_path = 'keys/key_server'
 # with open(pri_path, "r") as f:
 #     f.readline()
 #     pri_str = f.read().replace('\n', '')
@@ -15,5 +15,7 @@ pub_path = 'keys/key_server.pub'
 from KeyUtil import PublicKeyUtil, PrivateKeyUtil
 p_text = "123,192.168.1.175:55056,345"
 pub = PublicKeyUtil(pub_path)
+pri = PrivateKeyUtil(pri_path)
+text_sign = pri.sign(p_text)
 en_text = pub.encrypt(p_text)
-print(en_text)
+print(len(text_sign))

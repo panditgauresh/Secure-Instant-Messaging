@@ -26,7 +26,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         global auth_dict, nonce_dict, crypto_service, password_hash_dict, user_addr_dict, chatting_service
         msg = self.request[0]
         sock = self.request[1]
-        print('Message received from {}: {}'.format(self.client_address, msg))
+        # print('Message received from {}: {}'.format(self.client_address, msg))
         # get auth instance for client
         if self.client_address not in auth_dict:
             if msg != c.GREETING:
@@ -44,17 +44,16 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         else:
             # get decrypted msg
             dec_msg = crypto_service.sym_decrypt(cur_auth.dh_key, msg)
-            n, ts, msg_ps = PacketOrganiser.process_packet(dec_msg)
-            if PacketOrganiser.isValidTimeStamp(ts):
-                auth_dict[self.client_address].timestamp = PacketOrganiser.get_new_timestamp()  # update timestamp
-                rep = chatting_service.get_response(self.client_address, msg_ps)
+            n, msg_ps = PacketOrganiser.process_packet(dec_msg)
+            auth_dict[self.client_address].timestamp = PacketOrganiser.get_new_timestamp()  # update timestamp
+            rep = chatting_service.get_response(self.client_address, msg_ps)
             if rep is not None:
                 rep = PacketOrganiser.prepare_packet(rep, n)
                 rep = crypto_service.sym_encrypt(cur_auth.dh_key, rep)  # TODO encrypted response
 
         try:
             if rep is not None:
-                print("Sending msg length {}: {}".format(len(rep), rep))
+                # print("Sending msg length {}: {}".format(len(rep), rep))
                 sys.stdout.flush()
                 sock.sendto(rep, self.client_address)
         except socket.error:

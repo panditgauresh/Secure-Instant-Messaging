@@ -33,9 +33,11 @@ class PacketOrganiser(object):
             msg_parts.append(pkt[:eofp])
             msg_parts.append(pkt[eofp:eosp])
             msg_parts.append(pkt[eosp:])
-            return nonce, ts, msg_parts
+            if has_ts and not PacketOrganiser.isValidTimeStamp(ts):
+                raise Exception("Timestamp invalid: {}".format(ts))
+            return nonce, msg_parts
         else:
-            return None
+            raise Exception("Packet corrupted")
 
     @staticmethod
     def prepare_packet(msg_parts, nonce=None):
@@ -47,6 +49,9 @@ class PacketOrganiser(object):
         """
         if not isinstance(msg_parts, list):
             msg_parts = [msg_parts, "", ""]
+        for ind, mp in enumerate(msg_parts):
+            if not isinstance(mp, str):
+                msg_parts[ind] = str(mp)
         has_ts = c.TRUE_STR
         has_nonce = c.TRUE_STR if nonce is not None else c.FALSE_STR
         eofp = str(len(msg_parts[0])).zfill(5)
@@ -72,6 +77,7 @@ class PacketOrganiser(object):
         recvTime = datetime.datetime.strptime(timestamp, "%m:%d:%Y:%H:%M:%S:%f")
         timeNow = datetime.datetime.now()
         diff = timeNow - recvTime
+        # print("ts: {}, now: {}, diff: {}".format(recvTime, timeNow, diff))
         if (diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=100000)):
             return True
         return False

@@ -26,8 +26,8 @@ class ChattingService(object):
 
     def get_response(self, addr, msg_parts):
         # parse the msg
-        print(addr)
-        print(msg_parts)
+        # print(addr)
+        # print(msg_parts)
         res_msg = None
         msg_type = msg_parts[0]
         if msg_type == c.MSG_TYPE_KEEP_ALIVE:
@@ -71,7 +71,8 @@ class ChattingService(object):
         k_b = self.auth_dict[b_addr].dh_key
         ttb = PacketOrganiser.prepare_packet([a_username, util.addr_to_str(a_addr), k_ab])
         enc_ttb = self.crypto_service.sym_encrypt(k_b, ttb)
-        return [util.addr_to_str(b_addr), k_ab, enc_ttb]
+        signed_enc_ttb = enc_ttb + self.crypto_service.rsa_sign(enc_ttb)
+        return [util.addr_to_str(b_addr), k_ab, signed_enc_ttb]
 
     def handle_logout(self, addr):
         """

@@ -33,7 +33,7 @@ class Authentication(object):
         :param request:
         :return:
         """
-        print("Request received from {}: {}".format(self.addr, request))
+        # print("Request received from {}: {}".format(self.addr, request))
         if self.stage == 0:
             # sent a challenge to client
             chl, ind, self.masksize = self.ra.getChallengeTupple()
@@ -57,14 +57,12 @@ class Authentication(object):
                 if username in user_addr_dict:  # prevent duplicate login
                     return None
                 self.username = username
-                # dec_dh_pub_client, self.username, n1 = 321321321321321, "admin", "321"  # TODO for testing
-                print(n1)
                 dec_dh_pub_client = int(dec_dh_pub_client)
-                print("Seen DH public key: {}, Username: {}, n1: {}".format(dec_dh_pub_client, self.username, n1))
+                # print("Seen DH public key: {}, Username: {}, n1: {}".format(dec_dh_pub_client, self.username, n1))
                 dh_pri_key = self.crypto_service.get_dh_pri_key()
                 dh_pub_server = self.crypto_service.get_dh_pub_key(dh_pri_key)
                 self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, dec_dh_pub_client)
-                print("DH key established: {}".format(self.dh_key))
+                # print("DH key established: {}".format(self.dh_key))
                 # compose response: public key, K{N1, salt}, sign whole message
                 salt = self.pw_dict[self.username][1]  # TODO get salt from username
                 nonce_and_salt = util.format_message(n1, salt)
@@ -84,12 +82,12 @@ class Authentication(object):
                 enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
                 self.stage = 3
                 user_addr_dict[self.username] = self.addr
-                print("Authentication success.")
+                # print("Authentication success.")
                 return enc_msg
             else:
                 print("TimeStamp Incorrect: {}".format(timestamp))
 
 
     def is_auth(self):
-        print('Auth stage: {}'.format(self.stage))
+        # print('Auth stage: {}'.format(self.stage))
         return self.stage == 3

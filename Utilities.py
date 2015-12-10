@@ -5,6 +5,7 @@ import datetime
 import sys
 import socket
 import Consts as c
+from PacketOrganiser import PacketOrganiser
 
 
 def load_pickle_file(path):
@@ -134,6 +135,17 @@ def str_to_addr(s):
     ss = s.split(":")
     return (ss[0], int(ss[1]))
 
+def display_user_message(raw_msg, username):
+    """
+
+    :param raw_msg:
+    :param username:
+    :return:
+    """
+    ts = PacketOrganiser.get_new_timestamp()
+    msg = "\r{}<{}> {}\n".format(username, ts, raw_msg)
+    cmd_output(msg)
+
 def cmd_output(msg):
     """
 
@@ -144,6 +156,11 @@ def cmd_output(msg):
     sys.stdout.write(c.PROMPT)
     sys.stdout.flush()
 
+def get_good_nonce(dict):
+    nonce = PacketOrganiser.genRandomNumber()
+    while nonce in dict:
+        nonce = PacketOrganiser.genRandomNumber()
+    return nonce
 
 if __name__ == '__main__':
     # path = 'files/df_param'

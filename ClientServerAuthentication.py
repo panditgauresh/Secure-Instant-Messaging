@@ -51,11 +51,11 @@ class ClientServerAuthentication(object):
     def _establish_server_session_key(self, sock, username, password):
         # TODO handle errors (i.e. wrong password, timestamp and nonce)
         # send greeting to the server
-        print("Get Username: {}, Password: {}".format(username, password))
+        # print("Get Username: {}, Password: {}".format(username, password))
         assert isinstance(sock, socket.socket)
         sock.sendto(c.GREETING, self.server_addr)
         recv_msg = util.get_one_response(sock, self.server_addr)
-        print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
+        # print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
         chl, k, ind = recv_msg.split(",")
         ans = self.ra.compute_answer(chl, k)
         print("challenge:"+str(chl))
@@ -69,7 +69,7 @@ class ClientServerAuthentication(object):
         sock.sendto(auth_1_msg, self.server_addr)
         # step 2
         recv_msg = util.get_one_response(sock, self.server_addr)
-        print("Receive msg from {}, length: {}".format(self.server_addr, len(recv_msg)))
+        # print("Receive msg from {}, length: {}".format(self.server_addr, len(recv_msg)))
         rr = recv_msg.split(",")
         other_pub_key = rr[0]
         enc_n1_and_salt = recv_msg[(len(other_pub_key) + 1):-513]
@@ -90,7 +90,7 @@ class ClientServerAuthentication(object):
                 sock.sendto(auth_2_msg, self.server_addr)
                 # step 3
                 recv_msg = util.get_one_response(sock, self.server_addr)
-                print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
+                # print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
                 auth_result, n2_res = self.crypto_service.sym_decrypt(self.dh_key, recv_msg).split(",")
                 if self.packetgen.verifyNonce(n2_res):
                     if auth_result == c.SUCCESS:
