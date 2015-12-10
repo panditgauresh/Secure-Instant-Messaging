@@ -37,7 +37,12 @@ class ClientClientAuthentication(object):
         :return:
         """
         # TODO to be continued
+        addr = tuple(auth_info[0].split(":"))
+        message = self.server_addr +
+        self.ra.addTimeStamp(message)
+        encrypt_msg = self.crypto_service.sym_decrypt(auth_info[1],message)#auth_info[1])
         print(auth_info)
+        sock.sendto()
         pass
 
     def handle_auth_request_from_client(self, sock):
