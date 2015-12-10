@@ -71,7 +71,6 @@ def run_server(port):
     g = c.DH_GENERATOR
     p = util.load_df_param_from_file("files/df_param")
     crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
-    # crypto_service = FakeCryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)   # TODO for test
     chatting_service = ChattingService(user_addr_dict, auth_dict, crypto_service)
     pw_dict_path = "files/pw_hash_dict"
     password_hash_dict = util.load_pickle_file(pw_dict_path)

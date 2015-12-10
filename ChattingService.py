@@ -71,7 +71,7 @@ class ChattingService(object):
         k_b = self.auth_dict[b_addr].dh_key
         ttb = PacketOrganiser.prepare_packet([a_username, util.addr_to_str(a_addr), k_ab])
         enc_ttb = self.crypto_service.sym_encrypt(k_b, ttb)
-        return [b_addr, k_ab, enc_ttb]
+        return [util.addr_to_str(b_addr), k_ab, enc_ttb]
 
     def handle_logout(self, addr):
         """

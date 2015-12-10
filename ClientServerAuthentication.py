@@ -27,6 +27,7 @@ class ClientServerAuthentication(object):
         self.server_addr = remote_addr
         self.auth_success = False
         self.packetgen = PacketOrganiser.PacketOrganiser()
+        self.username = None
 
     def start_authenticate(self, sock):
         """
@@ -34,10 +35,11 @@ class ClientServerAuthentication(object):
         :return:
         """
         # get username and password from user
-        # username = util.get_user_input(c.USERNAME)
-        # password = util.get_user_input(c.PASSWORD)
-        username = "admin"
-        password = "admin123"
+        username = util.get_user_input(c.USERNAME)
+        password = util.get_user_input(c.PASSWORD)
+        self.username = username
+        # username = "admin"
+        # password = "admin123"
         success = False
         while not success:
             success, msg = self._establish_server_session_key(sock, username, password)

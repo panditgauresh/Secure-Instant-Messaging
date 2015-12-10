@@ -14,7 +14,7 @@ from PacketOrganiser import PacketOrganiser
 from ClientChattingService import ClientChattingService
 
 server_auth = None
-active_users = []  # active user list from server
+active_users = {}  # active user list from server
 addr_auths = {}  # addr : auth
 user_addr_dict = {}  # username : addr
 nonce_auths = {}  # nonce : auth for pre-auth (get TTB from server)
@@ -37,7 +37,7 @@ class ListenThread(threading.Thread):
         '''
         Handling user input and sending message to the server.
         '''
-        global user_addr_dict, nonce_auths, pending_response, packetorg, server_auth
+        global user_addr_dict, nonce_auths, pending_response, packetorg, server_auth, active_users
         while self.listen:
             # waiting for user input
             user_input = sys.stdin.readline()
@@ -45,7 +45,8 @@ class ListenThread(threading.Thread):
             if user_input:
                 # LIST,
                 handler = UserInputHandler(server_auth, user_addr_dict, addr_auths, nonce_auths, active_users)
-                type, addr, out_msg = handler.handle_input(user_input, packetorg)  # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
+                type, addr, out_msg = handler.handle_input(user_input, packetorg)
+                # Consts.MSG_HEAD + user_input + datetime.datetime.now().strftime("%H:%M:%S:%f")
                 if addr:
                     if addr == self.server_addr:
                         pending_response[type] = packetorg.addTimeStamp(out_msg)
@@ -56,6 +57,7 @@ class ListenThread(threading.Thread):
                         pass
                     sys.stdout.write(Consts.PROMPT)
                     sys.stdout.flush()
+                    print(active_users)
                 elif out_msg:
                     sys.stdout.write(out_msg)
                     sys.stdout.write("\n")
@@ -87,7 +89,6 @@ def run_client(server_ip, server_port):
     p = util.load_df_param_from_file("files/df_param")
     crypto_service = CryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)
     # crypto_service = FakeCryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)   # TODO for test
-    chat_service = ClientChattingService(active_users)
 
     server_addr = (server_ip, server_port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -112,6 +113,8 @@ def run_client(server_ip, server_port):
     except socket.error:
         print Consts.FAIL_GRE_MSG
         return
+
+    chat_service = ClientChattingService(active_users, server_auth)
 
     # start a background to handle user input
     t = ListenThread(sock, server_addr)
@@ -175,4 +178,5 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    run_client('192.168.15.1', 9090)
+    # run_client('192.168.125.1', 9090)
+    run_client('10.102.57.249', 9090)

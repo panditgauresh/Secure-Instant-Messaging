@@ -10,9 +10,10 @@ import Utilities as util
 
 class ClientChattingService(object):
 
-    def __init__(self, active_users):
-        assert isinstance(active_users, list)
+    def __init__(self, active_users, server_auth):
+        # assert isinstance(active_users, dict)
         self.active_users = active_users
+        self.server_auth = server_auth
 
     def process_message(self, msg_parts, username=None):
         """
@@ -23,7 +24,7 @@ class ClientChattingService(object):
         type = msg_parts[0]
         res_to_print = None
         if type == c.MSG_TYPE_LIST:
-            self.active_users.append(msg_parts[1])
+            # self.active_users.append(msg_parts[1])
             res_to_print = self.process_user_list(msg_parts[1])
         elif type == c.MSG_TYPE_MSG:
             res_to_print = self.parse_user_message(msg_parts[1], username)
@@ -48,5 +49,8 @@ class ClientChattingService(object):
         :return:
         """
         users = list_str.split(",")
-        self.active_users = list(users)
-        return "\rOnline users:\n" + "\n".join(users) + "\n"
+        self.active_users.clear()
+        for u in users:
+            if u != self.server_auth.username:
+                self.active_users[u] = 1
+        return "\rOnline users:\n" + "\n".join(self.active_users.keys()) + "\n"
