@@ -52,7 +52,6 @@ class ListenThread(threading.Thread):
                         pending_response[type] = packetorg.addTimeStamp(out_msg)
                     try:
                         self.sock.sendto(out_msg, addr)
-                        print isinstance(addr,tuple)
                     except socket.error:
                         print Consts.FAIL_SEND
                         pass
@@ -137,7 +136,6 @@ def run_client(server_ip, server_port):
                 if PacketOrganiser.isValidTimeStamp(ts):  # TODO for testing
                     # first check if it's a client/client authentication
                     # response from server
-                    print("Listeninggggggggg")
                     if n in nonce_auths:
                         # TODO process the auth response from server
                         cur_auth = nonce_auths.pop(n)
