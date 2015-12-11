@@ -191,6 +191,15 @@ def replace_ts_in_msg(msg):
     new_msg = msg_without_ts + PacketOrganiser.get_new_timestamp()
     return new_msg
 
+def send_confirmation(sock, crypto_service, key, n, r_addr, second_part=None):
+    if second_part:
+        conf_msg_parts = [c.MSG_RESPONSE_OK, second_part, ""]
+    else:
+        conf_msg_parts = c.MSG_RESPONSE_OK
+
+    conf_msg = PacketOrganiser.prepare_packet(conf_msg_parts, n)
+    enc_conf_msg = crypto_service.sym_encrypt(key, conf_msg)
+    sock.sendto(enc_conf_msg, r_addr)
 
 if __name__ == '__main__':
     # path = 'files/df_param'
