@@ -103,7 +103,7 @@ class ResendThread(threading.Thread):
                 self.send_keep_alive()
             for cache in self.request_cache.values():
                 ts = cache[c.CACHE_TS_IND]
-                print("cache: {},cache ts: {}".format(cache, ts))
+                # print("cache: {},cache ts: {}".format(cache, ts))
                 if not PacketOrganiser.isValidTimeStamp(ts, c.TS_RESEND_MICRO_SEC):
                     self.resend(cache)
 
@@ -337,4 +337,4 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    run_client('192.168.15.1', 9090)
+    run_client('192.168.1.9', 9090)
