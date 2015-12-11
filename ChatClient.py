@@ -153,7 +153,7 @@ def run_client(server_ip, server_port):
     server_auth = ClientServerAuthentication(client_addr, server_addr, crypto_service)
 
     try:
-        server_auth.start_authenticate(sock)
+        server_auth.authenticate_with_server(sock)
     except socket.error:
         print Consts.FAIL_GRE_MSG
         return
@@ -198,12 +198,12 @@ def run_client(server_ip, server_port):
                         addr_auths[b_addr] = cur_auth
                         request_cache.pop(n)
                     elif request_type == c.MSG_TYPE_LIST:
+                        # process the user list form server
                         chat_service.process_message(msg_ps)
                         request_cache.pop(n)
             elif r_addr in addr_auths:   #Reply or chat request from client
                 # print("recv msg len: {}".format(len(recv_msg)))
                 cur_auth = addr_auths[r_addr]
-                # dec_key = cur_auth.dh_key if cur_auth.auth_success else cur_auth.ab_key
                 dec_msg = crypto_service.sym_decrypt(cur_auth.dh_key, recv_msg)
                 n, dec_msg_parts = PacketOrganiser.process_packet(dec_msg)
                 type = dec_msg_parts[0]
@@ -305,5 +305,5 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    run_client('192.168.1.9', 9090)
+    run_client('192.168.125.1', 9090)
     # run_client('10.102.57.249', 9090)

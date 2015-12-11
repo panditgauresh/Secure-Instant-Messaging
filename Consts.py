@@ -1,5 +1,5 @@
 GREETING = 'HELLO'
-SUCCESS = 'SUCCESS'
+AUTH_SUCCESS = 'SUCCESS'
 MSG_HEAD = '#*'
 PROMPT = '+> '
 USERNAME = 'Username: '
@@ -43,6 +43,7 @@ MSG_TYPE_LOGOUT = "LOGOUT"
 MSG_TYPE_MSG = "MESSAGE"
 MSG_TYPE_PUB_KEY = "PUB_KEY"
 
+MSG_RESPONSE_WRONG_PW = "WPW"
 MSG_RESPONSE_OK = "OK"
 
 USR_CMD_LIST = "list"
@@ -60,6 +61,7 @@ TS_LEN = 26
 ERR_CMD = "Command not right. Use LIST or [CHAT <username> <msg>]"
 ERR_CMD_CHAT = "Chat command invalid."
 ERR_CMD_NO_USER = "Username doesn't exist!"
+
 
 CACHE_TYPE_IND = 0
 CACHE_KEY_IND = 1
