@@ -108,6 +108,14 @@ class PacketOrganiser(object):
         return False
 
     @staticmethod
+    def isValidTimeStampSeconds(timestamp, sec=300000):
+        diff = PacketOrganiser.get_time_diff_from_now(timestamp)
+        # print("ts: {}, now: {}, diff: {}".format(recvTime, timeNow, diff))
+        if (diff.days == 0 and abs(diff) < datetime.timedelta(seconds=sec)):
+            return True
+        return False
+
+    @staticmethod
     def get_time_diff_from_now(timestamp):
         recvTime = datetime.datetime.strptime(timestamp, "%m:%d:%Y:%H:%M:%S:%f")
         timeNow = datetime.datetime.now()

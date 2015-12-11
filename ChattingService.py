@@ -12,6 +12,7 @@ from TimestampService import TimestampService as tService
 import Utilities as util
 from PacketOrganiser import PacketOrganiser
 from CryptoService import CryptoService
+import datetime
 
 class ChattingService(object):
 
@@ -31,7 +32,7 @@ class ChattingService(object):
         res_msg = None
         msg_type = msg_parts[0]
         if msg_type == c.MSG_TYPE_KEEP_ALIVE:
-            res_msg = self.handle_keep_alive()
+            res_msg = self.handle_keep_alive(addr)
         elif msg_type == c.MSG_TYPE_LIST:
             res_msg = self.handle_list()
         elif msg_type == c.MSG_TYPE_START_NEW_CHAT:
@@ -41,11 +42,12 @@ class ChattingService(object):
             res_msg = self.handle_logout(addr)
         return res_msg
 
-    def handle_keep_alive(self):
+    def handle_keep_alive(self, addr):
         """
-
         :return:
         """
+        auth = self.auth_dict[addr]
+        auth.timestamp = datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
         return c.MSG_RESPONSE_OK
 
     def handle_list(self):

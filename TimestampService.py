@@ -9,9 +9,9 @@ class TimestampService(object):
         pass
 
     @staticmethod
-    def is_valid(self, ts):
+    def is_valid(ts):
         st = time.time()
-        return abs(st - ts) < 5000
+        return abs(st - ts) < 75
 
     @staticmethod
     def new_timestamp(self):

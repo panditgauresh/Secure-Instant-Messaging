@@ -9,6 +9,7 @@ from CryptoService import CryptoService
 from PacketOrganiser import PacketOrganiser
 from ChattingService import ChattingService
 import sys
+import TimestampService
 
 nonce_dict = {}
 auth_dict = {}
@@ -34,6 +35,11 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
             # new client, create an auth entry in the auth dictionary
             auth_dict[self.client_address] = Authentication.Authentication(self.client_address, crypto_service,
                                                                            password_hash_dict)
+        else:
+            auth = auth_dict[self.client_address]
+            if not PacketOrganiser.isValidTimeStampSeconds(auth.timestamp):
+                auth_dict.pop(self.client_address)
+
         cur_auth = auth_dict[self.client_address]
         assert isinstance(cur_auth, Authentication.Authentication)
         # TODO handle request, do the timestamp and nonce in handler class

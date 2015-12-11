@@ -4,7 +4,7 @@ from CryptoService import CryptoService
 import Utilities as util
 import Consts as c
 from PacketOrganiser import PacketOrganiser
-
+import datetime
 
 class Authentication(object):
     """
@@ -19,7 +19,7 @@ class Authentication(object):
         assert isinstance(crypto_service, CryptoService)
         self.crypto_service = crypto_service
         self.addr = addr
-        self.timestamp = time.time()
+        self.timestamp = datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
         self.ra = RequestAuthority.RequestAuthority()
         self.stage = 0
         self.dh_key = 0

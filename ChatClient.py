@@ -94,13 +94,23 @@ class ResendThread(threading.Thread):
         """
         Handling user input and sending message to the server.
         """
+        i = 0
         while self.resending:
             time.sleep(c.RESEND_SLEEP_SEC)
+            i = i + 2
             for cache in self.request_cache.values():
                 ts = cache[c.CACHE_TS_IND]
                 print("cache: {},cache ts: {}".format(cache, ts))
                 if not PacketOrganiser.isValidTimeStamp(ts, c.TS_RESEND_MICRO_SEC):
                     self.resend(cache)
+                if i == 30:
+                    i = 0
+                    self.send_keep_alive()
+
+    def send_keep_alive(self):
+        res_msg = PacketOrganiser.prepare_packet(c.MSG_TYPE_KEEP_ALIVE)
+        encrypt_msg = self.serv.sym_encrypt(self.auth.dh_key, res_msg)
+        self.sock.sendto(encrypt_msg, self.auth.server_addr)
 
     def resend(self, cache):
         """
@@ -251,8 +261,7 @@ def run_client(server_ip, server_port):
                         # send confirmation and first message to Bob
 
                         util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr, cur_auth.first_msg)
-                        # TODO add to request cache
-                        util.add_to_request_cache(request_cache, n, c.MSG_RESPONSE_OK, cur_auth.dh_key, )
+                        # TODO add to reques                        util.add_to_request_cache(request_cache, n, c.MSG_RESPONSE_OK, cur_auth.dh_key, )h_key, )
             else: # TODO the r_addr not in user_addr_dict, this can be a TTB, a DDOS weakness?
                 _, msg_ps = PacketOrganiser.process_packet(recv_msg)
                 signed_ttb, enc_inside_msg, _ = msg_ps
