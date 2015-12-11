@@ -8,14 +8,17 @@ import datetime
 
 class Authentication(object):
     """
-    Stages:
-        0 : hello
-        1 : hash challenge, df contribute
-        2 : check the password hash
-        3 : auth success
+
     """
 
     def __init__(self, addr, crypto_service, pw_dict):
+        """
+
+        :param addr: the IP and port as a tupple of the client
+        :param crypto_service: CryptoService to handle encryption and decryption
+        :param pw_dict: a reference to the username/password dictionary
+        :return:
+        """
         assert isinstance(crypto_service, CryptoService)
         self.crypto_service = crypto_service
         self.addr = addr
@@ -30,11 +33,14 @@ class Authentication(object):
     def process_request(self, request, user_addr_dict):
         """
         Process request and generate the response
-        :param request:
+        Stages:
+        0 : hello
+        1 : hash challenge, df contribute
+        2 : check the password hash
+        3 : auth success
+        :param request: request from client
         :return:
         """
-        # print("Request received from {}: {}".format(self.addr, request))
-        # print("stage {}".format(self.stage))
         if self.stage == 0:
             return self._stage_0_generate_challenge()
         elif self.stage == 1:
@@ -43,6 +49,10 @@ class Authentication(object):
             return self._stage_2_pw_check(request, user_addr_dict)
 
     def _stage_0_generate_challenge(self):
+        """
+        Generate and send challenge to client
+        :return:
+        """
         # sent a challenge to client
         chl, ind, self.masksize = self.ra.get_challenge_tupple()
         self.stage = 1
@@ -51,7 +61,12 @@ class Authentication(object):
         return msg_to_send
 
     def _stage_1_dh_key_exchange(self, request, user_addr_dict):
-        # check the challenge answer, decrypt the client DH public key and send DH public key back
+        """
+        check the challenge answer, decrypt the client DH public key and send DH public key back
+        :param request: request from client
+        :param user_addr_dict: dictionary which keep tracking of the username and corresponding IP address and port
+        :return:
+        """
         try:
             _, request_parts = PacketOrganiser.process_packet(request)
             c_ans, ind, enc_client_msg = request_parts
@@ -68,11 +83,9 @@ class Authentication(object):
                 return None
             self.username = username
             dec_dh_pub_client = int(dec_dh_pub_client)
-            # print("Seen DH public key: {}, Username: {}, n1: {}".format(dec_dh_pub_client, self.username, n1))
             dh_pri_key = self.crypto_service.get_dh_pri_key()
             dh_pub_server = self.crypto_service.get_dh_pub_key(dh_pri_key)
             self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, dec_dh_pub_client)
-            # print("DH key established: {}".format(self.dh_key))
             # compose response: public key, K{N1, salt}, sign whole message
             salt = self.pw_dict[self.username][1]  # get salt from username
             salt_pack = PacketOrganiser.prepare_packet(salt, nonce=n1, add_time=False)

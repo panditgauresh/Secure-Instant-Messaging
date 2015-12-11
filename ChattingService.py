@@ -6,9 +6,7 @@ Handling requests after authentication phase.
 * Logout
 """
 
-from MessageParser import MessageParser
 import Consts as c
-from TimestampService import TimestampService as tService
 import Utilities as util
 from PacketOrganiser import PacketOrganiser
 from CryptoService import CryptoService
