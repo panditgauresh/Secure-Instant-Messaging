@@ -1,10 +1,8 @@
-import RequestAuthority
+from RequestAuthority import RequestAuthority
 import time
 from CryptoService import CryptoService
 import Utilities as util
 import Consts as c
-import socket
-import sys
 from PacketOrganiser import PacketOrganiser
 
 class ClientClientAuthentication(object):
@@ -19,7 +17,7 @@ class ClientClientAuthentication(object):
         assert isinstance(crypto_service, CryptoService)
         self.crypto_service = crypto_service
         self.timestamp = time.time()
-        self.ra = RequestAuthority.RequestAuthority()
+        self.ra = RequestAuthority()
         self.stage = 0
         self.dh_key = 0
         self.pri_key = 0
@@ -57,7 +55,7 @@ class ClientClientAuthentication(object):
         sock.sendto(pack_to_send, b_addr)
         return b_addr
 
-    def handle_auth_request_from_client(self, sock):
+    def handle_auth_request_from_client(self, sock, server_dh_key, nonce):
         """
         handling Chatting requests from other client
         :param sock:
