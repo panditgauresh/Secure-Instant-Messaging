@@ -253,11 +253,11 @@ def run_client(server_ip, server_port):
                                 else:
                                     cur_auth.auth_success = True
                                     request_cache.pop(n)
-                                    # TODO display user message
-                                    msg_hmac = dec_msg_parts[1]
                                     # check the HMAC
+                                    msg_hmac = dec_msg_parts[1]
                                     msg, sign = PacketOrganiser.divide_signature(msg_hmac)
                                     if CryptoService.verify_hmac_sign(cur_auth.dh_key, msg, sign):
+                                        # display user message
                                         util.display_user_message(msg, cur_auth.username)
                                         # send message confirmation back
                                         util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr)
@@ -279,10 +279,11 @@ def run_client(server_ip, server_port):
                         util.add_to_request_cache(request_cache, n, c.MSG_TYPE_MSG, cur_auth.dh_key, conf_msg, r_addr)
                         sock.sendto(enc_conf_msg, r_addr)
             else: # TODO the r_addr not in user_addr_dict, this can be a TTB, a DDOS weakness?
+                # handle TTB from Alice
                 _, msg_ps = PacketOrganiser.process_packet(recv_msg)
                 signed_ttb, enc_inside_msg, _ = msg_ps
-                ttb = signed_ttb[:-512]
-                sign = signed_ttb[-512:]
+                ttb = signed_ttb[:-c.RSA_SIGN_LENGTH]
+                sign = signed_ttb[-c.RSA_SIGN_LENGTH:]
                 if not crypto_service.rsa_verify(ttb, sign):
                     raise Exception("Ticket To B corrupted!")
                 dec_ttb = crypto_service.sym_decrypt(server_auth.dh_key, ttb)
@@ -302,7 +303,7 @@ def run_client(server_ip, server_port):
                 new_auth.dh_key = crypto_service.get_dh_secret(pri_key, int(a_pub_key))
                 nonce = util.get_good_nonce(request_cache)
                 new_auth.last_nonce = nonce
-                # send pub key to a
+                # send pub key to Alice
                 msg_parts = [c.MSG_TYPE_PUB_KEY, pub_key, ""]
                 plain_msg = PacketOrganiser.prepare_packet(msg_parts, nonce)
                 enc_msg = crypto_service.sym_encrypt(k_ab, plain_msg)
