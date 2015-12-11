@@ -9,7 +9,7 @@ from CryptoService import CryptoService
 from PacketOrganiser import PacketOrganiser
 from ChattingService import ChattingService
 import sys
-import TimestampService
+
 
 nonce_dict = {}
 auth_dict = {}
@@ -19,15 +19,15 @@ password_hash_dict = {}
 user_addr_dict = {}
 
 
-class ChatRequestHandler(SocketServer.BaseRequestHandler):
+class ClientRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
-        '''
-        Perform packet handling logic
-        '''
+        """
+        Handle requests from the clients.
+        :return:
+        """
         global auth_dict, nonce_dict, crypto_service, password_hash_dict, user_addr_dict, chatting_service
         msg = self.request[0]
         sock = self.request[1]
-        # print('Message received from {}: {}'.format(self.client_address, msg))
         # get auth instance for client
         if self.client_address not in auth_dict:
             _, msg_parts = PacketOrganiser.process_packet(msg)
@@ -43,7 +43,6 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
 
         cur_auth = auth_dict[self.client_address]
         assert isinstance(cur_auth, Authentication)
-        # TODO handle request, do the timestamp and nonce in handler class
         rep = None
         if not cur_auth.is_auth():
             rep = cur_auth.process_request(msg, user_addr_dict)
@@ -69,9 +68,11 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
 
 
 def run_server(port):
-    '''
+    """
     Main function to run the server.
-    '''
+    :param port: the port number which the server should run on
+    :return:
+    """
     # load config file for DH and username/password
     global crypto_service, password_hash_dict, chatting_service, user_addr_dict, auth_dict
     g = c.DH_GENERATOR
@@ -83,7 +84,7 @@ def run_server(port):
     try:
         local_ip = socket.gethostbyname(socket.gethostname())
         print('Binding to ip: {}'.format(local_ip))
-        serv = SocketServer.UDPServer((local_ip, port), ChatRequestHandler)
+        serv = SocketServer.UDPServer((local_ip, port), ClientRequestHandler)
     except socket.error:
         print c.FAIL_SRV_INIT
         return
