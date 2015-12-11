@@ -96,8 +96,9 @@ class ResendThread(threading.Thread):
         """
         while self.resending:
             time.sleep(c.RESEND_SLEEP_SEC)
-            for cache in self.request_cache:
+            for cache in self.request_cache.values():
                 ts = cache[c.CACHE_TS_IND]
+                print("cache: {},cache ts: {}".format(cache, ts))
                 if not PacketOrganiser.isValidTimeStamp(ts, c.TS_RESEND_MICRO_SEC):
                     self.resend(cache)
 
@@ -111,6 +112,7 @@ class ResendThread(threading.Thread):
         ts = PacketOrganiser.get_new_timestamp()
         cache[c.CACHE_TS_IND] = ts
         msg = util.replace_ts_in_msg(cache[c.CACHE_MSG_IND])
+        cache[c.CACHE_MSG_IND] = msg
         enc_msg = server_auth.crypto_service.sym_encrypt(cache[c.CACHE_KEY_IND], msg)
         self.sock.sendto(enc_msg, cache[c.CACHE_ADDR_IND])
 
@@ -222,7 +224,7 @@ def run_client(server_ip, server_port):
                         # display user message
                         util.display_user_message(dec_msg_parts[1], cur_auth.username)
                         # send message confirmation back
-
+                        util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr)
                 else:
                     if type == c.MSG_RESPONSE_OK:
                         if n in request_cache:
@@ -237,6 +239,9 @@ def run_client(server_ip, server_port):
                                     cur_auth.auth_success = True
                                     request_cache.pop(n)
                                     util.display_user_message(dec_msg_parts[1], cur_auth.username)
+                                    # send back confirmation
+                                    util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr)
+
                     elif type == c.MSG_TYPE_PUB_KEY:
                         # finish peer authentication on Alice side
                         b_pub_key = int(dec_msg_parts[1])
@@ -245,12 +250,9 @@ def run_client(server_ip, server_port):
                         cur_auth.last_nonce = n
                         # send confirmation and first message to Bob
 
-                        conf_msg_parts = [c.MSG_RESPONSE_OK, cur_auth.first_msg, ""]
-                        conf_msg = PacketOrganiser.prepare_packet(conf_msg_parts, n)
-                        enc_conf_msg = crypto_service.sym_encrypt(cur_auth.dh_key, conf_msg)
-                        sign_msg = PacketOrganiser.add_sign(cur_auth.dh_key, enc_conf_msg)
-                        sock.sendto(sign_msg, r_addr)
-
+                        util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr, cur_auth.first_msg)
+                        # TODO add to request cache
+                        util.add_to_request_cache(request_cache, n, c.MSG_RESPONSE_OK, cur_auth.dh_key, )
             else: # TODO the r_addr not in user_addr_dict, this can be a TTB, a DDOS weakness?
                 _, msg_ps = PacketOrganiser.process_packet(recv_msg)
                 signed_ttb, enc_inside_msg, _ = msg_ps

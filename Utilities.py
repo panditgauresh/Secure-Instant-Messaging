@@ -177,8 +177,9 @@ def add_to_request_cache(cache, nonce, type, key, msg, addr, auth=None):
     if nonce in cache:
         raise Exception("Nonce existed in cache!")
     cache[nonce] = [type, key, msg, addr, PacketOrganiser.get_new_timestamp()]
-    if auth is not None:
+    if auth:
         cache[nonce].append(auth)
+    print("current request_cache: {}".format(cache))
 
 def replace_ts_in_msg(msg):
     """
@@ -190,6 +191,17 @@ def replace_ts_in_msg(msg):
     new_msg = msg_without_ts + PacketOrganiser.get_new_timestamp()
     return new_msg
 
+def send_confirmation(sock, crypto_service, key, n, r_addr, second_part=None):
+
+    if second_part:
+        conf_msg_parts = [c.MSG_RESPONSE_OK, second_part, ""]
+    else:
+        conf_msg_parts = c.MSG_RESPONSE_OK
+
+    conf_msg = PacketOrganiser.prepare_packet(conf_msg_parts, n)
+    enc_conf_msg = crypto_service.sym_encrypt(key, conf_msg)
+    sign_msg = PacketOrganiser.add_sign(key, enc_conf_msg)
+    sock.sendto(sign_msg, r_addr)
 
 if __name__ == '__main__':
     # path = 'files/df_param'
