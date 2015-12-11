@@ -61,7 +61,7 @@ TS_LEN = 26
 ERR_CMD = "Command not right. Use LIST or [CHAT <username> <msg>]"
 ERR_CMD_CHAT = "Chat command invalid."
 ERR_CMD_NO_USER = "Username doesn't exist!"
-
+ERR_CLIENT_DOWN = "Client is offline."
 
 CACHE_TYPE_IND = 0
 CACHE_KEY_IND = 1

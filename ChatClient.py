@@ -214,6 +214,9 @@ def run_client(server_ip, server_port):
                         # process the user list form server
                         chat_service.process_message(msg_ps)
                         request_cache.pop(n)
+                    elif request_type == c.ERR_CLIENT_DOWN:
+                        print(c.ERR_CLIENT_DOWN)
+                        request_cache.pop(n)
             elif r_addr in addr_auths:   #Reply or chat request from client
                 # print("recv msg len: {}".format(len(recv_msg)))
                 cur_auth = addr_auths[r_addr]
