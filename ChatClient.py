@@ -46,7 +46,7 @@ class ListenThread(threading.Thread):
             if user_input:
                 # LIST,
                 handler = UserInputHandler(server_auth, user_addr_dict, addr_auths, request_cache, active_users)
-                type, addr, out_msg = handler.handle_input(user_input, packetorg)
+                type, addr, out_msg = handler.handle_input(user_input)
                 if addr:
                     try:
                         # print("sending msg len: {}".format(len(out_msg)))
@@ -98,19 +98,21 @@ class ResendThread(threading.Thread):
         while self.resending:
             time.sleep(c.RESEND_SLEEP_SEC)
             i = i + 2
+            if i == 30:
+                i = 0
+                self.send_keep_alive()
             for cache in self.request_cache.values():
                 ts = cache[c.CACHE_TS_IND]
                 print("cache: {},cache ts: {}".format(cache, ts))
                 if not PacketOrganiser.isValidTimeStamp(ts, c.TS_RESEND_MICRO_SEC):
                     self.resend(cache)
-                if i == 30:
-                    i = 0
-                    self.send_keep_alive()
 
     def send_keep_alive(self):
+        global server_auth
         res_msg = PacketOrganiser.prepare_packet(c.MSG_TYPE_KEEP_ALIVE)
-        encrypt_msg = self.serv.sym_encrypt(self.auth.dh_key, res_msg)
-        self.sock.sendto(encrypt_msg, self.auth.server_addr)
+        encrypt_msg = server_auth.crypto_service.sym_encrypt(server_auth.dh_key, res_msg)
+        print(res_msg)
+        self.sock.sendto(encrypt_msg, server_auth.server_addr)
 
     def resend(self, cache):
         """
@@ -232,10 +234,15 @@ def run_client(server_ip, server_port):
 
                     elif type == c.MSG_TYPE_MSG:
                         # display user message
-                        util.display_user_message(dec_msg_parts[1], cur_auth.username)
-                        # send message confirmation back
-                        util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr)
+                        msg_hmac = dec_msg_parts[1]
+                        # check the HMAC
+                        msg, sign = PacketOrganiser.divide_signature(msg_hmac)
+                        if CryptoService.verify_hmac_sign(cur_auth.dh_key, msg, sign):
+                            util.display_user_message(msg, cur_auth.username)
+                            # send message confirmation back
+                            util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr)
                 else:
+                    # deal with peer auth success msg
                     if type == c.MSG_RESPONSE_OK:
                         if n in request_cache:
                             cache = request_cache[n]
@@ -245,12 +252,16 @@ def run_client(server_ip, server_port):
                                 if n != cur_auth.last_nonce:
                                     continue
                                 else:
-                                    # deal with peer auth success msg
                                     cur_auth.auth_success = True
                                     request_cache.pop(n)
-                                    util.display_user_message(dec_msg_parts[1], cur_auth.username)
-                                    # send back confirmation
-                                    util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr)
+                                    # TODO display user message
+                                    msg_hmac = dec_msg_parts[1]
+                                    # check the HMAC
+                                    msg, sign = PacketOrganiser.divide_signature(msg_hmac)
+                                    if CryptoService.verify_hmac_sign(cur_auth.dh_key, msg, sign):
+                                        util.display_user_message(msg, cur_auth.username)
+                                        # send message confirmation back
+                                        util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr)
 
                     elif type == c.MSG_TYPE_PUB_KEY:
                         # finish peer authentication on Alice side
@@ -259,9 +270,15 @@ def run_client(server_ip, server_port):
                         cur_auth.auth_success = True
                         cur_auth.last_nonce = n
                         # send confirmation and first message to Bob
-
-                        util.send_confirmation(sock, crypto_service, cur_auth.dh_key, n, r_addr, cur_auth.first_msg)
-                        # TODO add to reques                        util.add_to_request_cache(request_cache, n, c.MSG_RESPONSE_OK, cur_auth.dh_key, )h_key, )
+                        hmac = CryptoService.generate_hmac_sign(cur_auth.dh_key, cur_auth.first_msg)
+                        first_msg_hmac = cur_auth.first_msg + hmac
+                        conf_msg_parts = [c.MSG_RESPONSE_OK, first_msg_hmac, ""]
+                        conf_msg = PacketOrganiser.prepare_packet(conf_msg_parts, n)
+                        enc_conf_msg = crypto_service.sym_encrypt(cur_auth.dh_key, conf_msg)
+                        # add to request cache
+                        # a hack here (TYPE_MSG instead of RESPONSE_OK) to make the confirmation work
+                        util.add_to_request_cache(request_cache, n, c.MSG_TYPE_MSG, cur_auth.dh_key, conf_msg, r_addr)
+                        sock.sendto(enc_conf_msg, r_addr)
             else: # TODO the r_addr not in user_addr_dict, this can be a TTB, a DDOS weakness?
                 _, msg_ps = PacketOrganiser.process_packet(recv_msg)
                 signed_ttb, enc_inside_msg, _ = msg_ps
