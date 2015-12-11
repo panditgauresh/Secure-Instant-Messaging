@@ -30,7 +30,10 @@ class ClientRequestHandler(SocketServer.BaseRequestHandler):
         sock = self.request[1]
         # get auth instance for client
         if self.client_address not in auth_dict:
-            _, msg_parts = PacketOrganiser.process_packet(msg)
+            try:
+                _, msg_parts = PacketOrganiser.process_packet(msg)
+            except:
+                return
             if msg_parts[0] != c.GREETING:
                 return
             # new client, create an auth entry in the auth dictionary

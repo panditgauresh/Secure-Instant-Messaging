@@ -143,7 +143,7 @@ def display_user_message(raw_msg, username):
     :return:
     """
     ts = PacketOrganiser.get_new_timestamp()
-    msg = "\r{}<{}> {}\n".format(username, ts, raw_msg)
+    msg = "{}<{}> {}".format(username, ts, raw_msg)
     cmd_output(msg)
 
 def cmd_output(msg):
@@ -152,6 +152,7 @@ def cmd_output(msg):
     :param msg:
     :return:
     """
+    msg = "\r" + msg + "\n"
     sys.stdout.write(msg)
     sys.stdout.write(c.PROMPT)
     sys.stdout.flush()

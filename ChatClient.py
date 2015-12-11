@@ -101,11 +101,15 @@ class ResendThread(threading.Thread):
             if i == 30:
                 i = 0
                 self.send_keep_alive()
-            for cache in self.request_cache.values():
+            caches_to_remove = []
+            for nonce, cache in self.request_cache.iteritems():
                 ts = cache[c.CACHE_TS_IND]
                 # print("cache: {},cache ts: {}".format(cache, ts))
                 if not PacketOrganiser.isValidTimeStamp(ts, c.TS_RESEND_MICRO_SEC):
-                    self.resend(cache)
+                    if not self.resend(cache):
+                        caches_to_remove.append(nonce)
+            for n in caches_to_remove:
+                self.request_cache.pop(n)
 
     def send_keep_alive(self):
         global server_auth
@@ -117,15 +121,28 @@ class ResendThread(threading.Thread):
         """
 
         :param cache:
-        :return:
+        :return: True if resend happened, False otherwise
         """
         global server_auth
+        # first check if the cache is more than 30 seconds old
+        # if it is, we will drop the cache entry, which means the other side is off line, don't resend again
+        if cache[c.CACHE_TYPE_IND] == c.MSG_TYPE_MSG:
+            original_ts = self.get_original_ts(cache)
+            if not PacketOrganiser.isValidTimeStampSeconds(original_ts, 30):
+                util.cmd_output("Stop message resending.")
+                return False
+
         ts = PacketOrganiser.get_new_timestamp()
         cache[c.CACHE_TS_IND] = ts
         msg = util.replace_ts_in_msg(cache[c.CACHE_MSG_IND])
-        cache[c.CACHE_MSG_IND] = msg
+        # cache[c.CACHE_MSG_IND] = msg
         enc_msg = server_auth.crypto_service.sym_encrypt(cache[c.CACHE_KEY_IND], msg)
         self.sock.sendto(enc_msg, cache[c.CACHE_ADDR_IND])
+        return True
+
+    def get_original_ts(self, cache):
+        msg = cache[c.CACHE_MSG_IND]
+        return msg[-c.TS_LEN:]
 
     def stop(self):
         """
@@ -312,7 +329,10 @@ def run_client(server_ip, server_port):
                 addr_auths[a_addr] = new_auth
                 user_addr_dict[a_username] = a_addr
                 util.add_to_request_cache(request_cache, nonce, c.MSG_TYPE_PUB_KEY, k_ab, plain_msg, a_addr) # add to request cache
-
+        except socket.error:
+            # sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            # sock.bind(client_addr)
+            continue
         except KeyboardInterrupt:
             # when seeing ctrl-c terminate the client
             t_listen.stop()
@@ -322,6 +342,7 @@ def run_client(server_ip, server_port):
             print c.BYE
             server_auth.logout(sock)
             sock.close()
+            return
     t_listen.stop()
     t_listen.join()
     t_resend.stop()
