@@ -11,7 +11,7 @@ class TimestampService(object):
     @staticmethod
     def is_valid(self, ts):
         st = time.time()
-        return st - ts < 500
+        return abs(st - ts) < 5000
 
     @staticmethod
     def new_timestamp(self):

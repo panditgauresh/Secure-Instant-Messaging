@@ -46,7 +46,9 @@ class UserInputHandler(object):
                 nonce = PacketOrganiser.genRandomNumber()  # TODO add nonce to some nonce dict
                 auth.last_nonce = nonce
                 msg_to_send = PacketOrganiser.prepare_packet([c.MSG_TYPE_MSG, chat_msg, ""], nonce=nonce)
-                return None, addr, self.serv.sym_encrypt(key, msg_to_send)
+                encrypt_msg = self.serv.sym_encrypt(key, msg_to_send)
+                msg = PacketOrganiser.add_sign(key, encrypt_msg)
+                return None, addr, msg
             elif username in self.active_users:
                 # start peer authentication
                 nonce = PacketOrganiser.genRandomNumber()

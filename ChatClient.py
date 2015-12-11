@@ -145,7 +145,12 @@ def run_client(server_ip, server_port):
             elif r_addr in addr_auths:   #Reply or chat request from client
                 # print("recv msg len: {}".format(len(recv_msg)))
                 cur_auth = addr_auths[r_addr]
+                encrypt_msg, signature = packetorg.divide_signature(recv_msg)
+                if not packetorg.is_signature_match(cur_auth.dh_key, encrypt_msg, signature):
+                    print "Message from "+ cur_auth.username + " has be tampered. Packet Dropped."
+                    continue
                 dec_msg = crypto_service.sym_decrypt(cur_auth.dh_key, recv_msg)
+
                 n, dec_msg_parts = PacketOrganiser.process_packet(dec_msg)
 
 
@@ -231,5 +236,5 @@ if __name__ == '__main__':
     # parser.add_argument('-sp', required=True, type=int)
     # opts = parser.parse_args()
     # run_client(opts.sip, opts.sp)
-    run_client('192.168.1.9', 9090)
+    run_client('192.168.15.1', 9090)
     # run_client('10.102.57.249', 9090)

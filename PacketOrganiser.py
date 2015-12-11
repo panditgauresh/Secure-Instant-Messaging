@@ -2,10 +2,30 @@ import datetime
 import os
 import re
 import Consts as c
+import hmac
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
 
 class PacketOrganiser(object):
     def __init__(self):
         self.last_nonce = None
+
+    def is_signature_match(dh_key, encrypt_msg, signature):
+        #generate digest for the cipher text with HMAC
+        h = hmac.HMAC(dh_key, hashes.SHA256(), backend=default_backend())
+        h.update(encrypt_msg)
+        sign = h.finalize()
+        if sign == signature:
+            return True
+        return False
+
+    @staticmethod
+    def add_sign(dh_key, msg):
+        #generate digest for the cipher text with HMAC
+        h = hmac.HMAC(dh_key, hashes.SHA256(), backend=default_backend())
+        h.update(msg)
+        sign = h.finalize()
+        return msg + sign
 
     @staticmethod
     def process_packet(pkt):
@@ -77,8 +97,8 @@ class PacketOrganiser(object):
         recvTime = datetime.datetime.strptime(timestamp, "%m:%d:%Y:%H:%M:%S:%f")
         timeNow = datetime.datetime.now()
         diff = timeNow - recvTime
-        # print("ts: {}, now: {}, diff: {}".format(recvTime, timeNow, diff))
-        if (diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=100000)):
+        print("ts: {}, now: {}, diff: {}".format(recvTime, timeNow, diff))
+        if (diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=300000)):
             return True
         return False
 
