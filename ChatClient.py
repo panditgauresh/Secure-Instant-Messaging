@@ -111,7 +111,6 @@ class ResendThread(threading.Thread):
         global server_auth
         res_msg = PacketOrganiser.prepare_packet(c.MSG_TYPE_KEEP_ALIVE)
         encrypt_msg = server_auth.crypto_service.sym_encrypt(server_auth.dh_key, res_msg)
-        print(res_msg)
         self.sock.sendto(encrypt_msg, server_auth.server_addr)
 
     def resend(self, cache):

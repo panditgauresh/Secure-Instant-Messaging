@@ -56,7 +56,11 @@ class ChattingService(object):
         :return:
         """
         res = ""
-        for user in self.user_addr_dict:
+        for user, addr in self.user_addr_dict.iteritems():
+            auth = self.auth_dict[addr]
+            if not PacketOrganiser.isValidTimeStampSeconds(auth.timestamp,c.KEEP_ALIVE_TIME):
+                self.auth_dict.pop(addr)
+                continue
             res += user + ","
         return [c.MSG_TYPE_LIST, res[:-1], ""]
 
@@ -70,6 +74,10 @@ class ChattingService(object):
         k_ab = self.auth_dict[a_addr].crypto_service.new_sym_key()
         a_username = self.auth_dict[a_addr].username
         b_addr = self.user_addr_dict[b_username]
+        auth = self.auth_dict[b_addr]
+        if not PacketOrganiser.isValidTimeStampSeconds(auth.timestamp,c.KEEP_ALIVE_TIME):
+            self.auth_dict.pop(b_addr)
+            return None
         k_b = self.auth_dict[b_addr].dh_key
         ttb = PacketOrganiser.prepare_packet([a_username, util.addr_to_str(a_addr), k_ab])
         enc_ttb = self.crypto_service.sym_encrypt(k_b, ttb)
