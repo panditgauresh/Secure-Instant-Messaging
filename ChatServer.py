@@ -49,7 +49,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
             rep = chatting_service.get_response(self.client_address, msg_ps)
             if rep is not None:
                 rep = PacketOrganiser.prepare_packet(rep, n)
-                rep = crypto_service.sym_encrypt(cur_auth.dh_key, rep)  # TODO encrypted response
+                rep = crypto_service.sym_encrypt(cur_auth.dh_key, rep)
 
         try:
             if rep is not None:

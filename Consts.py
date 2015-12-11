@@ -1,5 +1,5 @@
 GREETING = 'HELLO'
-SUCCESS = 'SUCCESS'
+AUTH_SUCCESS = 'SUCCESS'
 MSG_HEAD = '#*'
 PROMPT = '+> '
 USERNAME = 'Username: '
@@ -43,11 +43,13 @@ MSG_TYPE_LOGOUT = "LOGOUT"
 MSG_TYPE_MSG = "MESSAGE"
 MSG_TYPE_PUB_KEY = "PUB_KEY"
 
+MSG_RESPONSE_WRONG_PW = "WPW"
 MSG_RESPONSE_OK = "OK"
 
 USR_CMD_LIST = "list"
 USR_CMD_CHAT = "send"
-USR_CMD_RE = "((?P<list>" + USR_CMD_LIST + ")|((?P<chat>" + USR_CMD_CHAT + ") (?P<username>[a-zA-Z0-9]+) (?P<msg>.+)))"
+USR_CMD_LOGOUT = "logout"
+USR_CMD_RE = "((?P<list>" + USR_CMD_LIST + ")|(?P<logout>" + USR_CMD_LOGOUT + ")|((?P<chat>" + USR_CMD_CHAT + ") (?P<username>[a-zA-Z0-9]+) (?P<msg>.+)))"
 
 # header: HAS_NONCE, HAS_TS, END_OF_FIRST_PART, END_OF_SECOND_PART
 HEADER_LEN = 12
@@ -57,5 +59,17 @@ FALSE_STR = "0"
 NONCE_LEN = 8
 TS_LEN = 26
 ERR_CMD = "Command not right. Use LIST or [CHAT <username> <msg>]"
-ERR_CMD_CHAT = "Chat command not right."
+ERR_CMD_CHAT = "Chat command invalid."
 ERR_CMD_NO_USER = "Username doesn't exist!"
+
+
+CACHE_TYPE_IND = 0
+CACHE_KEY_IND = 1
+CACHE_MSG_IND = 2
+CACHE_ADDR_IND = 3
+CACHE_TS_IND = 4
+CACHE_AUTH_IND = 5
+
+TS_VALID_MICRO_SEC = 100000
+TS_RESEND_MICRO_SEC = 1000000
+RESEND_SLEEP_SEC = 2

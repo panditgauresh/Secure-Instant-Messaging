@@ -75,17 +75,22 @@ class Authentication(object):
         elif self.stage == 2:
             # decrypt the message and check the password hash
             pw_hash, timestamp, n = self.crypto_service.sym_decrypt(self.dh_key, request).split(',')
-            if pw_hash != self.pw_dict[self.username][0]:
-                return "WRONG PASSWORD"
             if PacketOrganiser.isValidTimeStamp(timestamp):
-                msg = util.format_message(c.SUCCESS, n)
-                enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
-                self.stage = 3
-                user_addr_dict[self.username] = self.addr
-                # print("Authentication success.")
+                if pw_hash != self.pw_dict[self.username][0]:
+                    msg = util.format_message(c.MSG_RESPONSE_WRONG_PW, n)
+                    enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
+                    self.stage = 0
+                else:
+                    msg = util.format_message(c.AUTH_SUCCESS, n)
+                    enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
+                    self.stage = 3
+                    user_addr_dict[self.username] = self.addr
+                    # print("Authentication success.")
                 return enc_msg
             else:
                 print("TimeStamp Incorrect: {}".format(timestamp))
+
+    # def stage_1(self):
 
 
     def is_auth(self):

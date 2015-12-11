@@ -162,6 +162,35 @@ def get_good_nonce(dict):
         nonce = PacketOrganiser.genRandomNumber()
     return nonce
 
+def add_to_request_cache(cache, nonce, type, key, msg, addr, auth=None):
+    """
+
+    :param cache:
+    :param nonce:
+    :param type:
+    :param key:
+    :param msg:
+    :param addr:
+    :param auth:
+    :return:
+    """
+    if nonce in cache:
+        raise Exception("Nonce existed in cache!")
+    cache[nonce] = [type, key, msg, addr, PacketOrganiser.get_new_timestamp()]
+    if auth is not None:
+        cache[nonce].append(auth)
+
+def replace_ts_in_msg(msg):
+    """
+
+    :param msg:
+    :return:
+    """
+    msg_without_ts = msg[:-c.TS_LEN]
+    new_msg = msg_without_ts + PacketOrganiser.get_new_timestamp()
+    return new_msg
+
+
 if __name__ == '__main__':
     # path = 'files/df_param'
     # print load_df_param_from_file(path)
