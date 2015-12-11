@@ -7,6 +7,8 @@ from Encryptor import Encryptor
 from Decryptor import Decryptor
 import hashlib
 import os
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, hmac
 
 class CryptoService(object):
     def __init__(self, rsa_pub_path=None, rsa_pri_path=None, p=None, g=None):
@@ -47,3 +49,17 @@ class CryptoService(object):
 
     def new_sym_key(self, size=32):
         return os.urandom(size)
+
+    @staticmethod
+    def generate_hmac_sign(dh_key, msg):
+        #generate digest for the cipher text with HMAC
+        h = hmac.HMAC(dh_key, hashes.SHA256(), backend=default_backend())
+        h.update(msg)
+        sign = h.finalize()
+        # print "Signature is:" + str(len(sign)) + ":" + sign
+        return sign
+
+    @staticmethod
+    def verify_hmac_sign(dh_key, msg, sign):
+        expect_sign = CryptoService.generate_hmac_sign(dh_key, msg)
+        return expect_sign == sign

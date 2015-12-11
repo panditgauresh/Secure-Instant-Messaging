@@ -4,7 +4,7 @@ import argparse
 import socket
 import os
 import Utilities as util
-import Authentication
+from Authentication import Authentication
 from CryptoService import CryptoService
 from PacketOrganiser import PacketOrganiser
 from ChattingService import ChattingService
@@ -29,13 +29,14 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
         # print('Message received from {}: {}'.format(self.client_address, msg))
         # get auth instance for client
         if self.client_address not in auth_dict:
-            if msg != c.GREETING:
+            _, msg_parts = PacketOrganiser.process_packet(msg)
+            if msg_parts[0] != c.GREETING:
                 return
             # new client, create an auth entry in the auth dictionary
-            auth_dict[self.client_address] = Authentication.Authentication(self.client_address, crypto_service,
+            auth_dict[self.client_address] = Authentication(self.client_address, crypto_service,
                                                                            password_hash_dict)
         cur_auth = auth_dict[self.client_address]
-        assert isinstance(cur_auth, Authentication.Authentication)
+        assert isinstance(cur_auth, Authentication)
         # TODO handle request, do the timestamp and nonce in handler class
         rep = None
         if not cur_auth.is_auth():

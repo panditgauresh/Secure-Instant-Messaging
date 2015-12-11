@@ -2,34 +2,15 @@ import datetime
 import os
 import re
 import Consts as c
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, hmac
+
 
 class PacketOrganiser(object):
     def __init__(self):
         self.last_nonce = None
 
     @staticmethod
-    def is_signature_match(dh_key, encrypt_msg, signature):
-        #generate digest for the cipher text with HMAC
-        h = hmac.HMAC(dh_key, hashes.SHA256(), backend=default_backend())
-        h.update(encrypt_msg)
-        sign = h.finalize()
-        if sign == signature:
-            return True
-        return False
-
-    def divide_signature(self, msg):
-        return msg[:-32], msg[len(msg)-32:]
-
-    @staticmethod
-    def add_sign(dh_key, msg):
-        #generate digest for the cipher text with HMAC
-        h = hmac.HMAC(dh_key, hashes.SHA256(), backend=default_backend())
-        h.update(msg)
-        sign = h.finalize()
-        print "Signature is:" + str(len(sign)) + ":" + sign
-        return msg + sign
+    def divide_signature(msg):
+        return msg[:-c.HMAC_LEN], msg[-c.HMAC_LEN:]
 
     @staticmethod
     def process_packet(pkt):
@@ -58,14 +39,14 @@ class PacketOrganiser(object):
             msg_parts.append(pkt[:eofp])
             msg_parts.append(pkt[eofp:eosp])
             msg_parts.append(pkt[eosp:])
-            if has_ts and not PacketOrganiser.isValidTimeStamp(ts):
+            if has_ts == c.TRUE_STR and not PacketOrganiser.isValidTimeStamp(ts):
                 raise Exception("Timestamp invalid: {}".format(ts))
             return nonce, msg_parts
         else:
             raise Exception("Packet corrupted")
 
     @staticmethod
-    def prepare_packet(msg_parts, nonce=None, add_time=False):
+    def prepare_packet(msg_parts, nonce=None, add_time=True):
         """
         Add nonce, timestamp and header to the message
         packet struct: header, msg, nonce, timestamp
@@ -76,15 +57,19 @@ class PacketOrganiser(object):
         """
         if not isinstance(msg_parts, list):
             msg_parts = [msg_parts, "", ""]
+        else:
+            while len(msg_parts) < 3:
+                msg_parts.append("")
         for ind, mp in enumerate(msg_parts):
             if not isinstance(mp, str):
                 msg_parts[ind] = str(mp)
-        has_ts = c.TRUE_STR
+        has_ts = c.TRUE_STR if add_time else c.FALSE_STR
         has_nonce = c.TRUE_STR if nonce is not None else c.FALSE_STR
         eofp = str(len(msg_parts[0])).zfill(5)
         eosp = str(len(msg_parts[0] + msg_parts[1])).zfill(5)
         header = has_ts + has_nonce + eofp + eosp
-        res_msg = header + "".join(msg_parts) + (nonce if nonce is not None else "") + PacketOrganiser.get_new_timestamp()
+        res_msg = header + "".join(msg_parts) + (nonce if nonce is not None else "")
+        res_msg += PacketOrganiser.get_new_timestamp() if add_time else ""
         return res_msg
 
     def getNonce(timestamp):

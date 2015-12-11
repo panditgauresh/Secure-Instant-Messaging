@@ -6,6 +6,7 @@ import Consts as c
 import socket
 import sys
 from PacketOrganiser import PacketOrganiser
+import getpass
 
 class ClientServerAuthentication(object):
     """
@@ -39,6 +40,7 @@ class ClientServerAuthentication(object):
         while not success:
             self.username = util.get_user_input(c.USERNAME)
             password = util.get_user_input(c.PASSWORD)
+            # password = getpass.getpass("Password:")
             success = self._authenticate_with_server_helper(sock, self.username, password)
         print("Login success!")
 
@@ -61,16 +63,15 @@ class ClientServerAuthentication(object):
         :param sock:
         :return:
         """
-        # TODO handle errors (i.e. wrong password, timestamp and nonce)
         # send greeting to the server
         # print("Get Username: {}, Password: {}".format(username, password))
-        assert isinstance(sock, socket.socket)
-        # if step == 0:
-        sock.sendto(c.GREETING, self.server_addr)
+        msg_to_send = PacketOrganiser.prepare_packet(c.GREETING, add_time=False)
+        sock.sendto(msg_to_send, self.server_addr)
         recv_msg = util.get_one_response(sock, self.server_addr)
         # print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
-        chl, k, ind = recv_msg.split(",")
-        return chl, k, ind
+        _, recv_msg_parts = PacketOrganiser.process_packet(recv_msg)
+        # chl, k, ind = recv_msg_parts
+        return recv_msg_parts
 
     def _step_1_dh_key_establish(self, sock, chl, k, ind, username):
         """
@@ -86,28 +87,30 @@ class ClientServerAuthentication(object):
         print("challenge:"+str(ans))
         dh_pri_key = self.crypto_service.get_dh_pri_key()
         dh_pub_key = self.crypto_service.get_dh_pub_key(dh_pri_key)
-        msg = util.format_message(dh_pub_key, username)
-        nonce_msg = self.packetgen.addNonce(msg)
-        enc_msg = self.crypto_service.rsa_encrypt(nonce_msg)
-        auth_1_msg = util.format_message(ans, ind, enc_msg)
+        msg_to_send_parts = [dh_pub_key, username, ""]
+        nonce = PacketOrganiser.genRandomNumber()
+        msg_to_send = PacketOrganiser.prepare_packet(msg_to_send_parts, nonce=nonce, add_time=False)
+        enc_msg_to_send = self.crypto_service.rsa_encrypt(msg_to_send)
+        auth_1_msg_parts = [ans, ind, enc_msg_to_send]
+        auth_1_msg = PacketOrganiser.prepare_packet(auth_1_msg_parts, add_time=False)
         sock.sendto(auth_1_msg, self.server_addr)
-        # step 2
+
         recv_msg = util.get_one_response(sock, self.server_addr)
         # print("Receive msg from {}, length: {}".format(self.server_addr, len(recv_msg)))
-        rr = recv_msg.split(",")
-        other_pub_key = rr[0]
-        enc_n1_and_salt = recv_msg[(len(other_pub_key) + 1):-513]
-        sign = recv_msg[-512]
+        _, msg_sign = PacketOrganiser.process_packet(recv_msg)
+        msg, sign, _ = msg_sign
+        if not self.crypto_service.rsa_verify(msg, sign):  # TODO for testing
+            raise Exception("Step 1 signature verification fail.")
+        _, pub_enc_salt = PacketOrganiser.process_packet(msg)
+        other_pub_key, enc_salt, _ = pub_enc_salt
+        other_pub_key = int(other_pub_key)
+        self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, other_pub_key)
+        dec_salt_pack = self.crypto_service.sym_decrypt(self.dh_key, enc_salt)
+        n1, salt_parts = PacketOrganiser.process_packet(dec_salt_pack)
+        salt = salt_parts[0]
 
-        msg_body = other_pub_key + "," + enc_n1_and_salt
-        if self.crypto_service.rsa_verify(msg_body, sign) or True:  # TODO for testing
-            other_pub_key = int(other_pub_key)
-            self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, other_pub_key)
-            n1_res, salt = self.crypto_service.sym_decrypt(self.dh_key, enc_n1_and_salt).split(",")
-            if self.packetgen.verifyNonce(n1_res):
-                # calculate password
-                return salt
-        return None
+        if n1 == nonce:
+            return salt
 
     def _step_2_password_verification(self, sock, password, salt):
         """
@@ -118,20 +121,22 @@ class ClientServerAuthentication(object):
         :return:
         """
         pw_hash = self.crypto_service.compute_pw_hash(password, salt)
-        pw_hash_timestamp = self.packetgen.addTimeStamp(pw_hash)
-        pw_hash_msg = self.packetgen.addNonce(pw_hash_timestamp)
-        msg = util.format_message(pw_hash_msg)
+        nonce = PacketOrganiser.genRandomNumber()
+        msg = PacketOrganiser.prepare_packet(pw_hash, nonce)
         auth_2_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
         sock.sendto(auth_2_msg, self.server_addr)
         # step 3
         recv_msg = util.get_one_response(sock, self.server_addr)
         # print("Receive msg from {}: {}".format(self.server_addr, recv_msg))
-        auth_result, n2_res = self.crypto_service.sym_decrypt(self.dh_key, recv_msg).split(",")
-        if self.packetgen.verifyNonce(n2_res):
-            if auth_result == c.AUTH_SUCCESS:
-                self.auth_success = True
-            elif auth_result == c.MSG_RESPONSE_WRONG_PW:
-                print("Wrong username/password pair!")
+        dec_msg = self.crypto_service.sym_decrypt(self.dh_key, recv_msg)
+        n, msg_parts = PacketOrganiser.process_packet(dec_msg)
+        if n != nonce:
+            raise Exception("Step 3 nonce failed.")
+        auth_result = msg_parts[0]
+        if auth_result == c.AUTH_SUCCESS:
+            self.auth_success = True
+        elif auth_result == c.MSG_RESPONSE_WRONG_PW:
+            print("Wrong username/password pair!")
         return self.auth_success
 
 
