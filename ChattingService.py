@@ -75,7 +75,7 @@ class ChattingService(object):
         auth = self.auth_dict[b_addr]
         if not PacketOrganiser.isValidTimeStampSeconds(auth.timestamp,c.KEEP_ALIVE_TIME):
             self.auth_dict.pop(b_addr)
-            return None
+            return c.ERR_CLIENT_DOWN
         k_b = self.auth_dict[b_addr].dh_key
         ttb = PacketOrganiser.prepare_packet([a_username, util.addr_to_str(a_addr), k_ab])
         enc_ttb = self.crypto_service.sym_encrypt(k_b, ttb)
