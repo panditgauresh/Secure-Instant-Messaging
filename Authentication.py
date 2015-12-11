@@ -90,6 +90,8 @@ class Authentication(object):
             else:
                 print("TimeStamp Incorrect: {}".format(timestamp))
 
+    # def stage_1(self):
+
 
     def is_auth(self):
         # print('Auth stage: {}'.format(self.stage))
