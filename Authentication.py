@@ -45,6 +45,8 @@ class Authentication(object):
         # sent a challenge to client
         chl, ind, self.masksize = self.ra.get_challenge_tupple()
         self.stage = 1
+        # msg_to_send = PacketOrganiser.prepare_packet()
+
         return util.format_message(chl, self.masksize, ind)
 
     def _stage_1_dh_key_exchange(self, request, user_addr_dict):

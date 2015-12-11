@@ -41,7 +41,7 @@ class PacketOrganiser(object):
             raise Exception("Packet corrupted")
 
     @staticmethod
-    def prepare_packet(msg_parts, nonce=None):
+    def prepare_packet(msg_parts, nonce=None, add_time=False):
         """
         Add nonce, timestamp and header to the message
         packet struct: header, msg, nonce, timestamp

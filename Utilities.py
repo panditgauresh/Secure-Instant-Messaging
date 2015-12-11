@@ -177,8 +177,9 @@ def add_to_request_cache(cache, nonce, type, key, msg, addr, auth=None):
     if nonce in cache:
         raise Exception("Nonce existed in cache!")
     cache[nonce] = [type, key, msg, addr, PacketOrganiser.get_new_timestamp()]
-    if auth is not None:
+    if auth:
         cache[nonce].append(auth)
+    print("current request_cache: {}".format(cache))
 
 def replace_ts_in_msg(msg):
     """
