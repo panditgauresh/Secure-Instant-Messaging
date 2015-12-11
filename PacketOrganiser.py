@@ -108,7 +108,7 @@ class PacketOrganiser(object):
         return False
 
     @staticmethod
-    def isValidTimeStampSeconds(timestamp, sec=300000):
+    def isValidTimeStampSeconds(timestamp, sec=60):
         diff = PacketOrganiser.get_time_diff_from_now(timestamp)
         # print("ts: {}, now: {}, diff: {}".format(recvTime, timeNow, diff))
         if (diff.days == 0 and abs(diff) < datetime.timedelta(seconds=sec)):

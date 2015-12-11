@@ -37,7 +37,7 @@ class ChatRequestHandler(SocketServer.BaseRequestHandler):
                                                                            password_hash_dict)
         else:
             auth = auth_dict[self.client_address]
-            if not PacketOrganiser.isValidTimeStampSeconds(auth.timestamp):
+            if not PacketOrganiser.isValidTimeStampSeconds(auth.timestamp,75):
                 auth_dict.pop(self.client_address)
 
         cur_auth = auth_dict[self.client_address]
