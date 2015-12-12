@@ -81,21 +81,26 @@ class Authentication(object):
             dec_dh_pub_client, username, _ = dec_msg_parts
             if username in user_addr_dict:  # prevent duplicate login
                 return None
-            self.username = username
-            dec_dh_pub_client = int(dec_dh_pub_client)
-            dh_pri_key = self.crypto_service.get_dh_pri_key()
-            dh_pub_server = self.crypto_service.get_dh_pub_key(dh_pri_key)
-            self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, dec_dh_pub_client)
-            # compose response: public key, K{N1, salt}, sign whole message
-            salt = self.pw_dict[self.username][1]  # get salt from username
-            salt_pack = PacketOrganiser.prepare_packet(salt, nonce=n1, add_time=False)
-            enc_salt = self.crypto_service.sym_encrypt(self.dh_key, salt_pack)
-            msg = PacketOrganiser.prepare_packet([dh_pub_server, enc_salt, ""], add_time=False)
-            sign = self.crypto_service.rsa_sign(msg)
 
-            signed_msg = PacketOrganiser.prepare_packet([msg, sign, ""], add_time=False)
-            self.stage = 2
-            return signed_msg
+            if username not in self.pw_dict:
+                self.stage = 0
+                return PacketOrganiser.prepare_packet(c.MSG_RESPONSE_WRONG_CR, nonce=n1)
+            else:
+                self.username = username
+                dec_dh_pub_client = int(dec_dh_pub_client)
+                dh_pri_key = self.crypto_service.get_dh_pri_key()
+                dh_pub_server = self.crypto_service.get_dh_pub_key(dh_pri_key)
+                self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, dec_dh_pub_client)
+                # compose response: public key, K{N1, salt}, sign whole message
+                salt = self.pw_dict[self.username][1]  # get salt from username
+                salt_pack = PacketOrganiser.prepare_packet(salt, nonce=n1, add_time=False)
+                enc_salt = self.crypto_service.sym_encrypt(self.dh_key, salt_pack)
+                msg = PacketOrganiser.prepare_packet([dh_pub_server, enc_salt, ""], add_time=False)
+                sign = self.crypto_service.rsa_sign(msg)
+
+                signed_msg = PacketOrganiser.prepare_packet([msg, sign, ""], add_time=False)
+                self.stage = 2
+                return signed_msg
 
     def _stage_2_pw_check(self, request, user_addr_dict):
         """
@@ -109,14 +114,18 @@ class Authentication(object):
         n, request_parts = PacketOrganiser.process_packet(dec_request)
         pw_hash = request_parts[0]
         if pw_hash != self.pw_dict[self.username][0]:
-            msg = PacketOrganiser.prepare_packet(c.MSG_RESPONSE_WRONG_PW, nonce=n)
-            enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
-            self.stage = 0
+            return self.handle_wrong_password(n)
         else:
             msg = PacketOrganiser.prepare_packet(c.AUTH_SUCCESS, nonce=n)
             enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
             self.stage = 3
             user_addr_dict[self.username] = self.addr
+            return enc_msg
+
+    def handle_wrong_password(self, nonce):
+        msg = PacketOrganiser.prepare_packet(c.MSG_RESPONSE_WRONG_CR, nonce=nonce)
+        enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
+        self.stage = 0
         return enc_msg
 
     def is_auth(self):

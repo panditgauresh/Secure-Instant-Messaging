@@ -38,8 +38,8 @@ class ClientServerAuthentication(object):
         success = False
         while not success:
             self.username = util.get_user_input(c.USERNAME)
-            # password = util.get_user_input(c.PASSWORD)
-            password = getpass.getpass("Password:")
+            password = util.get_user_input(c.PASSWORD)
+            # password = getpass.getpass(c.PASSWORD)
             success = self._authenticate_with_server_helper(sock, self.username, password)
         print("Login success!")
 
@@ -52,6 +52,8 @@ class ClientServerAuthentication(object):
         """
         chl, k, ind = self._step_0_get_challenge(sock)
         salt = self._step_1_dh_key_establish(sock, chl, k, ind, username)
+        if salt is None:
+            return False
         is_success = self._step_2_password_verification(sock, password, salt)
         return is_success
 
@@ -96,19 +98,24 @@ class ClientServerAuthentication(object):
         recv_msg = util.get_one_response(sock, self.server_addr)
         # print("Receive msg from {}, length: {}".format(self.server_addr, len(recv_msg)))
         _, msg_sign = PacketOrganiser.process_packet(recv_msg)
-        msg, sign, _ = msg_sign
-        if not self.crypto_service.rsa_verify(msg, sign):  # TODO for testing
-            raise Exception("Step 1 signature verification fail.")
-        _, pub_enc_salt = PacketOrganiser.process_packet(msg)
-        other_pub_key, enc_salt, _ = pub_enc_salt
-        other_pub_key = int(other_pub_key)
-        self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, other_pub_key)
-        dec_salt_pack = self.crypto_service.sym_decrypt(self.dh_key, enc_salt)
-        n1, salt_parts = PacketOrganiser.process_packet(dec_salt_pack)
-        salt = salt_parts[0]
 
-        if n1 == nonce:
-            return salt
+        if msg_sign[0] == c.MSG_RESPONSE_WRONG_CR:
+            print("Wrong username/password pair!")
+            return
+        else:
+            msg, sign, _ = msg_sign
+            if not self.crypto_service.rsa_verify(msg, sign):  # TODO for testing
+                raise Exception("Step 1 signature verification fail.")
+            _, pub_enc_salt = PacketOrganiser.process_packet(msg)
+            other_pub_key, enc_salt, _ = pub_enc_salt
+            other_pub_key = int(other_pub_key)
+            self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, other_pub_key)
+            dec_salt_pack = self.crypto_service.sym_decrypt(self.dh_key, enc_salt)
+            n1, salt_parts = PacketOrganiser.process_packet(dec_salt_pack)
+            salt = salt_parts[0]
+
+            if n1 == nonce:
+                return salt
 
     def _step_2_password_verification(self, sock, password, salt):
         """
@@ -133,7 +140,7 @@ class ClientServerAuthentication(object):
         auth_result = msg_parts[0]
         if auth_result == c.AUTH_SUCCESS:
             self.auth_success = True
-        elif auth_result == c.MSG_RESPONSE_WRONG_PW:
+        elif auth_result == c.MSG_RESPONSE_WRONG_CR:
             print("Wrong username/password pair!")
         return self.auth_success
 

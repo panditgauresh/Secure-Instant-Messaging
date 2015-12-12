@@ -104,8 +104,8 @@ def run_server(port):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-sp', required=True, type=int)
-    opts = parser.parse_args()
-    run_server(opts.sp)
-    # run_server(9090)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('-sp', metavar='<ServerPORT>', required=True, type=int, help="specify server port number.")
+    # opts = parser.parse_args()
+    # run_server(opts.sp)
+    run_server(9090)
