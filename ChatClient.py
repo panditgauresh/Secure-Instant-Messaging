@@ -95,11 +95,12 @@ class ResendThread(threading.Thread):
         A new thread for resending any message in the cache.
         This thread also sends keep-alive messages every thirty seconds.
         """
+        global addr_auths, user_addr_dict, active_users
         i = 0
         while self.resending:
             time.sleep(c.RESEND_SLEEP_SEC)
-            i = i + 2
-            if i == 30:
+            i = i + c.TIME_STEP
+            if i == c.KEEP_ALIVE_INTERVAL:
                 i = 0
                 self.send_keep_alive()
             caches_to_remove = []
@@ -108,8 +109,15 @@ class ResendThread(threading.Thread):
                 if not PacketOrganiser.isValidTimeStamp(ts, c.TS_RESEND_MICRO_SEC):
                     if not self.resend(cache):
                         caches_to_remove.append(nonce)
+
             for n in caches_to_remove:
-                self.request_cache.pop(n)
+                cache_to_remove = self.request_cache.pop(n)
+                # also remove addr_auths entry
+                addr = cache_to_remove[c.CACHE_ADDR_IND]
+                if addr in addr_auths:
+                    auth_to_delete = addr_auths.pop(addr)
+                    user_addr_dict.pop(auth_to_delete.username)
+                    active_users.pop(auth_to_delete.username)
 
     def send_keep_alive(self):
         """
@@ -130,7 +138,7 @@ class ResendThread(threading.Thread):
         # if it is, we will drop the cache entry, which means the other side is off line, don't resend again
         if cache[c.CACHE_TYPE_IND] == c.MSG_TYPE_MSG:
             original_ts = self.get_original_ts(cache)
-            if not PacketOrganiser.isValidTimeStampSeconds(original_ts, 30):
+            if not PacketOrganiser.isValidTimeStampSeconds(original_ts, c.RESEND_TIMEOUT):
                 util.cmd_output(c.WARNING_STOP_RESENDING)
                 return False
 
