@@ -56,7 +56,6 @@ class CryptoService(object):
         h = hmac.HMAC(dh_key, hashes.SHA256(), backend=default_backend())
         h.update(msg)
         sign = h.finalize()
-        # print "Signature is:" + str(len(sign)) + ":" + sign
         return sign
 
     @staticmethod

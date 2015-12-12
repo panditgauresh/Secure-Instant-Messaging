@@ -32,8 +32,7 @@ class ClientServerAuthentication(object):
 
     def authenticate_with_server(self, sock):
         """
-
-        :return:
+        This function authenticates the username and password with the server
         """
         # get username and password from user
         success = False
@@ -46,11 +45,10 @@ class ClientServerAuthentication(object):
 
     def _authenticate_with_server_helper(self, sock, username, password):
         """
-
-        :param sock:
-        :param username:
-        :param password:
-        :return:
+        :param sock: The sock where the user has to be authenticated
+        :param username: username of the user matched
+        :param password: password of the user
+        :return: Returns if the verification was successful or not
         """
         chl, k, ind = self._step_0_get_challenge(sock)
         salt = self._step_1_dh_key_establish(sock, chl, k, ind, username)

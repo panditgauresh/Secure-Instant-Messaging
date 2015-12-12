@@ -62,7 +62,6 @@ class ClientRequestHandler(SocketServer.BaseRequestHandler):
 
         try:
             if rep is not None:
-                # print("Sending msg length {}: {}".format(len(rep), rep))
                 sys.stdout.flush()
                 sock.sendto(rep, self.client_address)
         except socket.error:

@@ -46,6 +46,10 @@ class UserInputHandler(object):
         return self._handle_single_cmd(c.MSG_TYPE_LOGOUT)
 
     def _handle_single_cmd(self, msg_type):
+        """
+        :param msg_type: the type of the message
+        :return: Prepares and returns the encrypted message depending on the message type
+        """
         nonce = util.get_good_nonce(self.request_cache)
         res_msg = PacketOrganiser.prepare_packet(msg_type, nonce)
         util.add_to_request_cache(self.request_cache, nonce, msg_type,
@@ -53,6 +57,10 @@ class UserInputHandler(object):
         return msg_type, self.auth.server_addr, self.serv.sym_encrypt(self.auth.dh_key, res_msg)
 
     def _handle_chat(self, match_res):
+        """
+        :param match_res:
+        :return: Returns the corresponding message for the username
+        """
         username = match_res.group("username")
         chat_msg = match_res.group("msg")
         if username in self.user_addr_dict:

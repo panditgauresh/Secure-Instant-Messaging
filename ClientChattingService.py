@@ -19,7 +19,6 @@ class ClientChattingService(object):
         """
         process the message
         :param msg:
-        :return:
         """
         type = msg_parts[0]
         res_to_print = None
@@ -43,7 +42,6 @@ class ClientChattingService(object):
 
     def process_user_list(self, list_str):
         """
-
         :param list_str:
         :return:
         """
