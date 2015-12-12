@@ -115,7 +115,7 @@ class Authentication(object):
         n, request_parts = PacketOrganiser.process_packet(dec_request)
         pw_hash = request_parts[0]
         if pw_hash != self.pw_dict[self.username][0]:
-            msg = PacketOrganiser.prepare_packet(c.MSG_RESPONSE_WRONG_PW, nonce=n)
+            msg = PacketOrganiser.prepare_packet(c.MSG_RESPONSE_WRONG_CR, nonce=n)
             enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
             self.stage = 0
             self.loginfailures += 1

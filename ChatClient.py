@@ -362,9 +362,12 @@ def run_client(server_ip, server_port):
     sock.close()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-sip', required=True)
-    parser.add_argument('-sp', required=True, type=int)
-    opts = parser.parse_args()
-    run_client(opts.sip, opts.sp)
-    # run_client('192.168.1.9', 9090)
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('-sip', required=True)
+    # parser.add_argument('-sp', required=True, type=int)
+    # opts = parser.parse_args()
+    # run_client(opts.sip, opts.sp)
+
+    # load server address
+    sip, sp = util.load_pickle_file(c.SERVER_CONFIG_PATH)
+    run_client(sip, sp)

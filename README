@@ -6,16 +6,13 @@
 
 Windows:
     python ChatServer.py -sp <PORT_NUMBER>
-    python ChatClient.py -sip <SERVER_IP> -sp <SERVER_PORT>
-
-    (NOTE: when server starts, it will show which IP ADDRESS it uses. User THIS IP ADDRESS to run the ChatClient.)
+    python ChatClient.py
 
 Linux:
     sudo python ChatServer.py -sp <PORT_NUMBER>
-    sudo python ChatClient.py -sip <SERVER_IP> -sp <SERVER_PORT>
+    sudo python ChatClient.py
 
     (NOTE: 'sudo' is needed if the 'cryptography' package is installed under root user.)
-    (NOTE: when server starts, it will show which IP ADDRESS it uses. User THIS IP ADDRESS to run the ChatClient.)
 
 
 ###################

@@ -87,7 +87,10 @@ def run_server(port):
     try:
         local_ip = socket.gethostbyname(socket.gethostname())
         print('Binding to ip: {}'.format(local_ip))
-        serv = SocketServer.UDPServer((local_ip, port), ClientRequestHandler)
+        serv_addr = (local_ip, port)
+        serv = SocketServer.UDPServer(serv_addr, ClientRequestHandler)
+        # dump the server address to config file for client using
+        util.save(c.SERVER_CONFIG_PATH, serv_addr)
     except socket.error:
         print c.FAIL_SRV_INIT
         return
@@ -106,8 +109,8 @@ def run_server(port):
 
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('-sp', metavar='<ServerPORT>', required=True, type=int, help="specify server port number.")
-    # opts = parser.parse_args()
-    # run_server(opts.sp)
-    run_server(9090)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-sp', metavar='<ServerPORT>', required=True, type=int, help="specify server port number.")
+    opts = parser.parse_args()
+    run_server(opts.sp)
+    # run_server(9090)

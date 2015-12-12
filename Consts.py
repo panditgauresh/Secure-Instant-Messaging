@@ -20,6 +20,7 @@ PUB_KEY_PATH = 'keys/key_server.pub'
 PRI_KEY_PATH = 'keys/key_server'
 DH_CONFIG_PATH = "config/dh_param"
 PW_HASH_PATH = "config/pw_hash_dict"
+SERVER_CONFIG_PATH = "config/server_addr"
 P_TEXT_LEN_4096 = 470
 C_TEXT_LEN_4096 = 512
 SIGN_LEN = 512
