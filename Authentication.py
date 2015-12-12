@@ -98,6 +98,12 @@ class Authentication(object):
             return signed_msg
 
     def _stage_2_pw_check(self, request, user_addr_dict):
+        """
+        Stage 2 is to check if the password is correct
+        :param request: Request is the incoming message which contains the password.
+        :param user_addr_dict: The user_add_dict is the dictionary which has each user and associated address stored.
+        :return: The method returns a encrypted response message
+        """
         # decrypt the message and check the password hash
         dec_request = self.crypto_service.sym_decrypt(self.dh_key, request)
         n, request_parts = PacketOrganiser.process_packet(dec_request)
@@ -111,9 +117,10 @@ class Authentication(object):
             enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
             self.stage = 3
             user_addr_dict[self.username] = self.addr
-            # print("Authentication success.")
         return enc_msg
 
     def is_auth(self):
-        # print('Auth stage: {}'.format(self.stage))
+        """
+        :return: If Authentication is complete the stage is 3
+        """
         return self.stage == 3

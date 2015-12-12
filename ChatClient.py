@@ -44,12 +44,12 @@ class ListenThread(threading.Thread):
             user_input = sys.stdin.readline()
             packetorg.user_addr_dict = user_addr_dict
             if user_input:
-                # LIST,
+                # The handler handles any input that comes to the client and sends the desired output message.
+                # Depending on the input the output message and the address are received.
                 handler = UserInputHandler(server_auth, user_addr_dict, addr_auths, request_cache, active_users)
                 type, addr, out_msg = handler.handle_input(user_input)
                 if addr:
                     try:
-                        # print("sending msg len: {}".format(len(out_msg)))
                         self.sock.sendto(out_msg, addr)
                     except socket.error:
                         print c.FAIL_SEND
@@ -92,7 +92,8 @@ class ResendThread(threading.Thread):
 
     def run(self):
         """
-        Handling user input and sending message to the server.
+        A new thread for resending any message in the cache.
+        This thread also sends keep-alive messages every thirty seconds.
         """
         i = 0
         while self.resending:
@@ -104,7 +105,6 @@ class ResendThread(threading.Thread):
             caches_to_remove = []
             for nonce, cache in self.request_cache.iteritems():
                 ts = cache[c.CACHE_TS_IND]
-                # print("cache: {},cache ts: {}".format(cache, ts))
                 if not PacketOrganiser.isValidTimeStamp(ts, c.TS_RESEND_MICRO_SEC):
                     if not self.resend(cache):
                         caches_to_remove.append(nonce)
@@ -112,6 +112,9 @@ class ResendThread(threading.Thread):
                 self.request_cache.pop(n)
 
     def send_keep_alive(self):
+        """
+        Sends a keep alive message to the server.
+        """
         global server_auth
         res_msg = PacketOrganiser.prepare_packet(c.MSG_TYPE_KEEP_ALIVE)
         encrypt_msg = server_auth.crypto_service.sym_encrypt(server_auth.dh_key, res_msg)
@@ -119,8 +122,7 @@ class ResendThread(threading.Thread):
 
     def resend(self, cache):
         """
-
-        :param cache:
+        :param cache: The parameter cache stores what message haven't acknowledged to resend them.
         :return: True if resend happened, False otherwise
         """
         global server_auth
@@ -141,6 +143,10 @@ class ResendThread(threading.Thread):
         return True
 
     def get_original_ts(self, cache):
+        """
+        :param cache: The parameter cache stores what message haven't acknowledged to resend them.
+        :return: Gets the timestamp from the cache
+        """
         msg = cache[c.CACHE_MSG_IND]
         return msg[-c.TS_LEN:]
 
@@ -235,7 +241,6 @@ def run_client(server_ip, server_port):
                         print(c.ERR_CLIENT_DOWN)
                         request_cache.pop(n)
             elif r_addr in addr_auths:   #Reply or chat request from client
-                # print("recv msg len: {}".format(len(recv_msg)))
                 cur_auth = addr_auths[r_addr]
                 dec_msg = crypto_service.sym_decrypt(cur_auth.dh_key, recv_msg)
 

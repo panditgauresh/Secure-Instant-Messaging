@@ -86,6 +86,11 @@ class PacketOrganiser(object):
 
     @staticmethod
     def isValidTimeStamp(timestamp, micro_s=300000):
+        """
+        :param timestamp: The timestamp to be verified for validity
+        :param micro_s: The number of microseconds to be verified agains
+        :return: returns true if the timestamp is withing micro_s microseconds from current time, else false
+        """
         diff = PacketOrganiser.get_time_diff_from_now(timestamp)
         # print("ts: {}, now: {}, diff: {}".format(recvTime, timeNow, diff))
         if (diff.days == 0 and abs(diff) < datetime.timedelta(microseconds=micro_s)):
@@ -94,6 +99,11 @@ class PacketOrganiser(object):
 
     @staticmethod
     def isValidTimeStampSeconds(timestamp, sec=60):
+        """
+        :param timestamp: The timestamp to be verified for validity
+        :param micro_s: The number of seconds to be verified agains
+        :return: returns true if the timestamp is withing sec seconds from current time, else false
+        """
         diff = PacketOrganiser.get_time_diff_from_now(timestamp)
         # print("ts: {}, now: {}, diff: {}".format(recvTime, timeNow, diff))
         if (diff.days == 0 and abs(diff) < datetime.timedelta(seconds=sec)):
@@ -102,21 +112,41 @@ class PacketOrganiser(object):
 
     @staticmethod
     def get_time_diff_from_now(timestamp):
+        """
+        :param timestamp: the requested timestamp
+        :return: Returns the absolute difference as a datetime object
+        """
         recvTime = datetime.datetime.strptime(timestamp, "%m:%d:%Y:%H:%M:%S:%f")
         timeNow = datetime.datetime.now()
         return timeNow - recvTime
 
     def addNonce(self, out_msg):
+        """
+        :param out_msg: The message to which nonce has to be added
+        :return: Appends nonce and sends the message
+        """
         self.last_nonce = PacketOrganiser.genRandomNumber(c.NONCE_LEN)
         return str(out_msg) + "," + str(self.last_nonce)
 
     def verifyNonce(self, nonce):
+        """
+        :param nonce: The function is used to verify nonce.
+        :return: returns true if it matches else false
+        """
         return self.last_nonce == nonce
 
     def addTimeStamp(self, out_msg):
+        """
+        :param out_msg: The message to which timestamp is to be added
+        :return: timestamp appended message
+        """
         return str(out_msg) + "," + datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
 
     def hasTimedOut(self,out_msg):
+        """
+        :param out_msg:
+        :return: To check if the current message has been timed out.
+        """
         timestamp = out_msg.rsplit(',',1)[1]
         recvTime = datetime.datetime.strptime(timestamp,"%m:%d:%Y:%H:%M:%S:%f")
         timeNow = datetime.datetime.now()
@@ -126,6 +156,11 @@ class PacketOrganiser(object):
         return False
 
     def modifyTimeStamp(self, message, client_auth):
+        """
+        :param message: message containing timestamp
+        :param client_auth: the auth of the client used to encrypt and decrypt the message
+        :return: Returns the message with modified timestamp
+        """
         encrypt_msg = message.rsplit(',',1)[0]
         decrypt_msg = client_auth.crypto_service.sym_decrypt(client_auth.dh_key, encrypt_msg)
         #Todo: Change this method to remove nonce and timestamp in a better way
@@ -138,6 +173,10 @@ class PacketOrganiser(object):
         return datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
 
     def get_user_message(self, out_msg):
+        """
+        :param out_msg:
+        :return: returns none if the chat message doesnt match
+        """
         chat, user, msg = out_msg.split()
         if(chat != c.USR_CMD_CHAT):
             return None, None
