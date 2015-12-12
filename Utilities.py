@@ -68,10 +68,10 @@ def isValidTimeStamp(message, indexOfMessage):
     timestamp = message.rsplit('\n',1)[1]
     recvTime = datetime.datetime.strptime(timestamp,"%H:%M:%S:%f")
     timeNow = datetime.datetime.now().strptime(timestamp,"%H:%M:%S:%f")
-    print(message)
-    print("timestamp")
-    print(timeNow)
-    print(recvTime)
+    # print(message)
+    # print("timestamp")
+    # print(timeNow)
+    # print(recvTime)
     diff = timeNow - recvTime
     print(diff)
     #if(diff.days == 0 and diff.hours == 0 and diff.minutes == 0 and diff.seconds == 0):
@@ -94,7 +94,7 @@ def addNonce(out_msg,addr,nonce_dict):
 
 def retrieveOrigMsg(out_msg):
     out_msg = out_msg.rsplit('\n',1)[0]
-    print("out Message:"+str(out_msg))
+    # print("out Message:"+str(out_msg))
     return out_msg
 
 def format_message(*args):

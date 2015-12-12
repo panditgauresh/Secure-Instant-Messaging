@@ -78,11 +78,10 @@ def run_server(port):
     # load config file for DH and username/password
     global crypto_service, password_hash_dict, chatting_service, user_addr_dict, auth_dict
     g = c.DH_GENERATOR
-    p = util.load_df_param_from_file("files/df_param")
+    p = util.load_df_param_from_file(c.DH_CONFIG_PATH)
     crypto_service = CryptoService(rsa_pri_path=c.PRI_KEY_PATH, p=p, g=g)
     chatting_service = ChattingService(user_addr_dict, auth_dict, crypto_service)
-    pw_dict_path = "files/pw_hash_dict"
-    password_hash_dict = util.load_pickle_file(pw_dict_path)
+    password_hash_dict = util.load_pickle_file(c.PW_HASH_PATH)
     try:
         local_ip = socket.gethostbyname(socket.gethostname())
         print('Binding to ip: {}'.format(local_ip))
@@ -105,8 +104,8 @@ def run_server(port):
 
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('-sp', required=True, type=int)
-    # opts = parser.parse_args()
-    # run_server(opts.sp)
-    run_server(9090)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-sp', required=True, type=int)
+    opts = parser.parse_args()
+    run_server(opts.sp)
+    # run_server(9090)

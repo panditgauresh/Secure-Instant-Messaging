@@ -7,7 +7,6 @@ import socket
 import sys
 from PacketOrganiser import PacketOrganiser
 import getpass
-import platform
 
 class ClientServerAuthentication(object):
     """
@@ -39,10 +38,8 @@ class ClientServerAuthentication(object):
         success = False
         while not success:
             self.username = util.get_user_input(c.USERNAME)
-            if platform.system() == 'Windows':
-                password = util.get_user_input(c.PASSWORD)
-            else:
-                password = getpass.getpass("Password:")
+            # password = util.get_user_input(c.PASSWORD)
+            password = getpass.getpass("Password:")
             success = self._authenticate_with_server_helper(sock, self.username, password)
         print("Login success!")
 
@@ -84,8 +81,8 @@ class ClientServerAuthentication(object):
         :return:
         """
         ans = self.ra.compute_answer(chl, k)
-        print("challenge:"+str(chl))
-        print("challenge:"+str(ans))
+        # print("challenge:"+str(chl))
+        # print("challenge:"+str(ans))
         dh_pri_key = self.crypto_service.get_dh_pri_key()
         dh_pub_key = self.crypto_service.get_dh_pub_key(dh_pri_key)
         msg_to_send_parts = [dh_pub_key, username, ""]

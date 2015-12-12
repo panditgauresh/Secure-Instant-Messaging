@@ -41,7 +41,7 @@ class ChallengeComm():
         :param challenge: Challenge is the predicted value of the challenge
         :return: returns if the predicted challenge value matches the value in the challenge array at the index
         """
-        print str(challenge)+":challenge:"+str(self.challenges[index])
+        # print str(challenge)+":challenge:"+str(self.challenges[index])
         if (self.challenges[index] & ((1<<mask)-1)) == challenge:
             self.refreshChallenge(index)
             return True
@@ -54,7 +54,7 @@ class ChallengeComm():
         :param hashed: the received hash value
         :return: Returns the predicted challenge
         """
-        print mask +": Mask Value" + str(hashed)
+        # print mask +": Mask Value" + str(hashed)
         for i in range((1<<int(mask))-1):
             if hashlib.sha256(str(i).encode('utf-8')).hexdigest() == hashed:
                 return i

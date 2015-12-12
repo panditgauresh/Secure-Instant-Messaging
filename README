@@ -1,0 +1,69 @@
+# Secure-Instant-Messaging
+
+###################
+#    USAGE        #
+###################
+
+Windows:
+    python ChatServer.py -sp <PORT_NUMBER>
+    python ChatClient.py -sip <SERVER_IP> -sp <SERVER_PORT>
+
+    (NOTE: when server starts, it will show which IP ADDRESS it uses. User THIS IP ADDRESS to run the ChatClient.)
+
+Linux:
+    sudo python ChatServer.py -sp <PORT_NUMBER>
+    sudo python ChatClient.py -sip <SERVER_IP> -sp <SERVER_PORT>
+
+    (NOTE: 'sudo' is needed if the 'cryptography' package is installed under root user.)
+    (NOTE: when server starts, it will show which IP ADDRESS it uses. User THIS IP ADDRESS to run the ChatClient.)
+
+
+###################
+#    INTERFACE    #
+###################
+
+Login:
+    Enter username/password when prompt.
+
+Logout:
+    Type 'logout', then hit ENTER. This will terminate the client app.
+
+Who's online:
+    Type 'list', then hit ENTER.
+
+Chat:
+    Type 'send <USERNAME> <MESSAGE>', then hit ENTER.
+    (NOTE: only users show in the list may be reached. So run 'list' first or wait for someone to send a message.)
+
+
+##############################
+#      USER CREDENTIALS      #
+##############################
+
++----------+--------------+
+| Username | Password     |
++----------+--------------+
+| alice    | ILoveNS201%  |
++----------+--------------+
+| bob      | Ns15Fall!@11 |
++----------+--------------+
+| coco     | CS674)Awesome|
++----------+--------------+
+| derek    |              |
++----------+--------------+
+| eli      |              |
++----------+--------------+
+
+
+###################
+#      OTHER      #
+###################
+
+Diffie Hellman Parameters:
+    g = 2
+    p can be find in the 'config/dh_param' file. Use 'pickle' to load that file. The object is a tuple (g, p).
+
+User credentials hash:
+    The hash can be find in the 'config/pw_hash_dict' file.
+    Use 'pickle' to load that file.
+    The object is a dict with username as the key and tuple (hash(pwd+salt), salt) as the value.
