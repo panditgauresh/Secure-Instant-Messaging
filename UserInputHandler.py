@@ -61,8 +61,8 @@ class UserInputHandler(object):
         :param match_res:
         :return: Returns the corresponding message for the username
         """
-        username = match_res.group("username")
-        chat_msg = match_res.group("msg")
+        username = match_res.group(c.USR_CMD_RE_GROUP_USER)
+        chat_msg = match_res.group(c.USR_CMD_RE_GROUP_MSG)
         if username in self.user_addr_dict:
             return self._send_msg(username, chat_msg)
         elif username in self.active_users:

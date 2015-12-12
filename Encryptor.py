@@ -1,7 +1,7 @@
-from cryptography.hazmat.primitives import hashes, hmac, padding
+from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from KeyUtil import PrivateKeyUtil, PublicKeyUtil
+from KeyUtil import PublicKeyUtil
 import os
 import Consts as c
 
@@ -46,13 +46,6 @@ class Encryptor():
         cipher = Cipher(algorithms.AES(secret), modes.CBC(iv), backend=default_backend())
         encryptor = cipher.encryptor()
         cipher_text = encryptor.update(padded_data) + encryptor.finalize()
-
-        # generate digest for the cipher text with HMAC
-        # key = os.urandom(32)
-        # h = hmac.HMAC(key, hashes.SHA256(), backend=default_backend())
-        # h.update(b"data")
-        # sign = h.finalize()
-
 
         # concate header: sym_key + iv + digest
         header = iv

@@ -1,19 +1,12 @@
 import RequestAuthority
-import time
 from CryptoService import CryptoService
-import Utilities as util
 import Consts as c
 from PacketOrganiser import PacketOrganiser
 import datetime
 
 class Authentication(object):
-    """
-
-    """
-
     def __init__(self, addr, crypto_service, pw_dict):
         """
-
         :param addr: the IP and port as a tupple of the client
         :param crypto_service: CryptoService to handle encryption and decryption
         :param pw_dict: a reference to the username/password dictionary
@@ -22,7 +15,7 @@ class Authentication(object):
         assert isinstance(crypto_service, CryptoService)
         self.crypto_service = crypto_service
         self.addr = addr
-        self.timestamp = datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
+        self.timestamp = datetime.datetime.now().strftime(c.TS_FORMAT)
         self.ra = RequestAuthority.RequestAuthority()
         self.stage = 0
         self.dh_key = 0
@@ -42,11 +35,11 @@ class Authentication(object):
         :param request: request from client
         :return:
         """
-        if self.stage == 0:
+        if self.stage == c.AUTH_STAGE_INIT:
             return self._stage_0_generate_challenge()
-        elif self.stage == 1:
+        elif self.stage == c.AUTH_STAGE_1:
             return self._stage_1_dh_key_exchange(request, user_addr_dict)
-        elif self.stage == 2:
+        elif self.stage == c.AUTH_STAGE_2:
             return self._stage_2_pw_check(request, user_addr_dict)
 
     def _stage_0_generate_challenge(self):
@@ -56,7 +49,7 @@ class Authentication(object):
         """
         # sent a challenge to client
         chl, ind, self.masksize = self.ra.get_challenge_tupple(self.loginfailures)
-        self.stage = 1
+        self.stage = c.AUTH_STAGE_1
         msg_to_send_parts = [chl, self.masksize, ind]
         msg_to_send = PacketOrganiser.prepare_packet(msg_to_send_parts, add_time=False)
         return msg_to_send
@@ -76,32 +69,33 @@ class Authentication(object):
         c_ans = int(c_ans)
         ind = int(ind)
         #k = self.ra.getMaskSize()  # TODO flaw when mask size changed
-        if self.ra.challengeComm.isChallengeMatched(self.masksize, ind, c_ans):
+        if self.ra.challengeComm.is_challenge_matched(self.masksize, ind, c_ans):
             dec_msg = self.crypto_service.rsa_decrypt(enc_client_msg)
             n1, dec_msg_parts = PacketOrganiser.process_packet(dec_msg)
             dec_dh_pub_client, username, _ = dec_msg_parts
             if username in user_addr_dict:  # prevent duplicate login
-                return None
+                self.stage = c.AUTH_STAGE_INIT
+                return PacketOrganiser.prepare_packet(c.MSG_RESPONSE_USER_EXISTS, nonce=n1)
 
             if username not in self.pw_dict:
-                self.stage = 0
+                self.stage = c.AUTH_STAGE_INIT
                 return PacketOrganiser.prepare_packet(c.MSG_RESPONSE_WRONG_CR, nonce=n1)
-            else:
-                self.username = username
-                dec_dh_pub_client = int(dec_dh_pub_client)
-                dh_pri_key = self.crypto_service.get_dh_pri_key()
-                dh_pub_server = self.crypto_service.get_dh_pub_key(dh_pri_key)
-                self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, dec_dh_pub_client)
-                # compose response: public key, K{N1, salt}, sign whole message
-                salt = self.pw_dict[self.username][1]  # get salt from username
-                salt_pack = PacketOrganiser.prepare_packet(salt, nonce=n1, add_time=False)
-                enc_salt = self.crypto_service.sym_encrypt(self.dh_key, salt_pack)
-                msg = PacketOrganiser.prepare_packet([dh_pub_server, enc_salt, ""], add_time=False)
-                sign = self.crypto_service.rsa_sign(msg)
 
-                signed_msg = PacketOrganiser.prepare_packet([msg, sign, ""], add_time=False)
-                self.stage = 2
-                return signed_msg
+            self.username = username
+            dec_dh_pub_client = int(dec_dh_pub_client)
+            dh_pri_key = self.crypto_service.get_dh_pri_key()
+            dh_pub_server = self.crypto_service.get_dh_pub_key(dh_pri_key)
+            self.dh_key = self.crypto_service.get_dh_secret(dh_pri_key, dec_dh_pub_client)
+            # compose response: public key, K{N1, salt}, sign whole message
+            salt = self.pw_dict[self.username][1]  # get salt from username
+            salt_pack = PacketOrganiser.prepare_packet(salt, nonce=n1, add_time=False)
+            enc_salt = self.crypto_service.sym_encrypt(self.dh_key, salt_pack)
+            msg = PacketOrganiser.prepare_packet([dh_pub_server, enc_salt, ""], add_time=False)
+            sign = self.crypto_service.rsa_sign(msg)
+
+            signed_msg = PacketOrganiser.prepare_packet([msg, sign, ""], add_time=False)
+            self.stage = c.AUTH_STAGE_2
+            return signed_msg
 
     def _stage_2_pw_check(self, request, user_addr_dict):
         """
@@ -117,12 +111,12 @@ class Authentication(object):
         if pw_hash != self.pw_dict[self.username][0]:
             msg = PacketOrganiser.prepare_packet(c.MSG_RESPONSE_WRONG_CR, nonce=n)
             enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
-            self.stage = 0
+            self.stage = c.AUTH_STAGE_INIT
             self.loginfailures += 1
         else:
             msg = PacketOrganiser.prepare_packet(c.AUTH_SUCCESS, nonce=n)
             enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
-            self.stage = 3
+            self.stage = c.AUTH_STAGE_FINISHED
             user_addr_dict[self.username] = self.addr
         return enc_msg
 
@@ -131,4 +125,4 @@ class Authentication(object):
         """
         :return: If Authentication is complete the stage is 3
         """
-        return self.stage == 3
+        return self.stage == c.AUTH_STAGE_FINISHED

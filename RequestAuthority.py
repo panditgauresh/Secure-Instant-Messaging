@@ -1,6 +1,5 @@
-from multiprocessing.connection import answer_challenge
 import ChallengeComm
-import datetime
+import Consts as c
 import hashlib
 
 
@@ -13,10 +12,10 @@ class RequestAuthority():
         :return: The challenge tuple which is the hashed value of the challenge,
         the index of the challenge and the size of the mask.
         """
-        chalTup = self.challengeComm.getNextChallenge()
+        chalTup = self.challengeComm.get_next_challenge()
         masksize = self.get_mask_size(login_failures)
         masked = chalTup[0] & ((1<<masksize)-1)
-        hash_object = hashlib.sha256(str(masked).encode('utf-8')).hexdigest()
+        hash_object = hashlib.sha256(str(masked).encode(c.CHL_ENCODE)).hexdigest()
         return (hash_object, chalTup[1], masksize)
 
     def get_mask_size(self, login_failures):
@@ -33,4 +32,4 @@ class RequestAuthority():
         :param k: the index
         :return: computes the value of the challenge based on the challenge hash chl
         """
-        return self.challengeComm.computeChallenge(k, chl)
+        return self.challengeComm.compute_challenge(k, chl)

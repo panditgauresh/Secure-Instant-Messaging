@@ -40,10 +40,10 @@ class PacketOrganiser(object):
             msg_parts.append(pkt[eofp:eosp])
             msg_parts.append(pkt[eosp:])
             if has_ts == c.TRUE_STR and not PacketOrganiser.isValidTimeStamp(ts):
-                raise Exception("Timestamp invalid: {}".format(ts))
+                raise Exception(c.TS_INVALID_MSG + "{}".format(ts))
             return nonce, msg_parts
         else:
-            raise Exception("Packet corrupted")
+            raise Exception(c.PACKET_CORRUPTED_MSG)
 
     @staticmethod
     def prepare_packet(msg_parts, nonce=None, add_time=True):
@@ -114,7 +114,7 @@ class PacketOrganiser(object):
         :param timestamp: the requested timestamp
         :return: Returns the absolute difference as a datetime object
         """
-        recvTime = datetime.datetime.strptime(timestamp, "%m:%d:%Y:%H:%M:%S:%f")
+        recvTime = datetime.datetime.strptime(timestamp, c.TS_FORMAT)
         timeNow = datetime.datetime.now()
         return timeNow - recvTime
 
@@ -138,7 +138,7 @@ class PacketOrganiser(object):
         :param out_msg: The message to which timestamp is to be added
         :return: timestamp appended message
         """
-        return str(out_msg) + "," + datetime.datetime.now().strftime("%m:%d:%Y:%H:%M:%S:%f")
+        return str(out_msg) + "," + datetime.datetime.now().strftime(c.TS_FORMAT)
 
     def hasTimedOut(self,out_msg):
         """
@@ -146,7 +146,7 @@ class PacketOrganiser(object):
         :return: To check if the current message has been timed out.
         """
         timestamp = out_msg.rsplit(',',1)[1]
-        recvTime = datetime.datetime.strptime(timestamp,"%m:%d:%Y:%H:%M:%S:%f")
+        recvTime = datetime.datetime.strptime(timestamp, c.TS_FORMAT)
         timeNow = datetime.datetime.now()
         diff = timeNow - recvTime
         if(diff.days == 0 and abs(diff) > datetime.timedelta(seconds=2)):

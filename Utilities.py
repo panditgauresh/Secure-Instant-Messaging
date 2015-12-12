@@ -108,7 +108,7 @@ def get_one_response(sock, addr):
     recv_msg = None
     while True:
         # listening to the server and display the message
-        recv_msg, r_addr = sock.recvfrom(20480)
+        recv_msg, r_addr = sock.recvfrom(c.SOCK_BUFFER)
         if r_addr == addr and recv_msg:
             break
     return recv_msg
@@ -143,7 +143,7 @@ def display_user_message(raw_msg, username):
     :return:
     """
     ts = PacketOrganiser.get_new_timestamp()
-    msg = "{}<{}> {}".format(username, ts, raw_msg)
+    msg = "{} <{}>: {}".format(username, ts, raw_msg)
     cmd_output(msg)
 
 def cmd_output(msg):
@@ -176,7 +176,7 @@ def add_to_request_cache(cache, nonce, type, key, msg, addr, auth=None):
     :return:
     """
     if nonce in cache:
-        raise Exception("Nonce existed in cache!")
+        raise Exception(c.WARNING_EXISTED_NONCE)
     cache[nonce] = [type, key, msg, addr, PacketOrganiser.get_new_timestamp()]
     if auth:
         cache[nonce].append(auth)

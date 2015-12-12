@@ -90,7 +90,7 @@ def run_server(port):
         serv_addr = (local_ip, port)
         serv = SocketServer.UDPServer(serv_addr, ClientRequestHandler)
         # dump the server address to config file for client using
-        util.save(c.SERVER_CONFIG_PATH, serv_addr)
+        util.save(c.SERVER_CONFIG_PATH, serv_addr, True)
     except socket.error:
         print c.FAIL_SRV_INIT
         return

@@ -2,6 +2,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.backends import default_backend
 from cryptography.exceptions import InvalidSignature
+import Consts as c
 
 
 class PrivateKeyUtil():
@@ -28,7 +29,7 @@ class PrivateKeyUtil():
         public_key = private_key.public_key()
         pem = public_key.public_bytes(encoding=serialization.Encoding.PEM,
                                       format=serialization.PublicFormat.SubjectPublicKeyInfo)
-        with open(key_path + ".pub", "wb+") as key_file:
+        with open(key_path + c.RSA_PUB_KEY_EXT, "wb+") as key_file:
             key_file.write(pem)
 
         return (private_key, public_key)

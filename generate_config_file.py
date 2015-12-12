@@ -26,7 +26,9 @@ def generate_DF_param_file(path):
 def generate_password_hash_dict(path):
     pw_dict = {"alice" : "ILoveNS201%",
                "bob" : "Ns15Fall!@11",
-               "coco" : "CS674)Awesome"}
+               "coco" : "CS674)Awesome",
+               "derek" : "Go0dPasswor$",
+               "eli" : "bAdPassw0r&"}
     pw_hash_dict = {}
     for u in pw_dict:
         salt = os.urandom(6)

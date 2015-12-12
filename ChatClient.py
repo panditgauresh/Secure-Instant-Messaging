@@ -14,6 +14,7 @@ from PacketOrganiser import PacketOrganiser
 from ClientChattingService import ClientChattingService
 import time
 
+
 server_auth = None
 active_users = {}  # active user list from server
 addr_auths = {}  # addr : auth
@@ -33,7 +34,6 @@ class ListenThread(threading.Thread):
         self.listen = True  # flag for terminate the thread
         self.server_addr = saddr
 
-
     def run(self):
         """
         Handling user input and sending message to the server.
@@ -47,7 +47,7 @@ class ListenThread(threading.Thread):
                 # The handler handles any input that comes to the client and sends the desired output message.
                 # Depending on the input the output message and the address are received.
                 handler = UserInputHandler(server_auth, user_addr_dict, addr_auths, request_cache, active_users)
-                type, addr, out_msg = handler.handle_input(user_input)
+                msg_type, addr, out_msg = handler.handle_input(user_input)
                 if addr:
                     try:
                         self.sock.sendto(out_msg, addr)
@@ -131,7 +131,7 @@ class ResendThread(threading.Thread):
         if cache[c.CACHE_TYPE_IND] == c.MSG_TYPE_MSG:
             original_ts = self.get_original_ts(cache)
             if not PacketOrganiser.isValidTimeStampSeconds(original_ts, 30):
-                util.cmd_output("Stop message resending.")
+                util.cmd_output(c.WARNING_STOP_RESENDING)
                 return False
 
         ts = PacketOrganiser.get_new_timestamp()
@@ -165,7 +165,7 @@ def run_client(server_ip, server_port):
     server_ip: IP address of the server
     server_port: port number which server uses to communicate
     """
-    global server_auth, user_auths, user_addr_dict, active_users
+    global server_auth, user_addr_dict, active_users
     g = 2
     p = util.load_df_param_from_file(c.DH_CONFIG_PATH)
     crypto_service = CryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)
@@ -310,7 +310,7 @@ def run_client(server_ip, server_port):
                 ttb = signed_ttb[:-c.RSA_SIGN_LENGTH]
                 sign = signed_ttb[-c.RSA_SIGN_LENGTH:]
                 if not crypto_service.rsa_verify(ttb, sign):
-                    raise Exception("Ticket To B corrupted!")
+                    raise Exception(c.WARNING_TTB_INVALID)
                 dec_ttb = crypto_service.sym_decrypt(server_auth.dh_key, ttb)
                 _, ttb_parts = PacketOrganiser.process_packet(dec_ttb)  # a_username, a_addr, k_ab
                 a_username_ttb, a_addr, k_ab = ttb_parts
@@ -321,7 +321,7 @@ def run_client(server_ip, server_port):
                 a_username, a_pub_key, _ = inside_msg_parts
                 # print("username_ttb: {}, a_username: {}".format(a_username_ttb, a_username))
                 if a_username_ttb != a_username:
-                    raise Exception("Username not match in the TTB!")
+                    raise Exception(c.WARNING_TTB_USERNAME_INVALID)
                 new_auth = ClientClientAuthentication(a_username, crypto_service)
                 pri_key = crypto_service.get_dh_pri_key()
                 pub_key = crypto_service.get_dh_pub_key(pri_key)

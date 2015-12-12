@@ -10,6 +10,7 @@ import os
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, hmac
 
+
 class CryptoService(object):
     def __init__(self, rsa_pub_path=None, rsa_pri_path=None, p=None, g=None):
         self.dh = DiffieHellman(p, g) if p is not None and g is not None else None

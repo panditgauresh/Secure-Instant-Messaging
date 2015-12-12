@@ -1,7 +1,7 @@
-from cryptography.hazmat.primitives import hashes, hmac, padding
+from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from KeyUtil import PrivateKeyUtil, PublicKeyUtil
+from KeyUtil import PrivateKeyUtil
 import Consts as c
 
 

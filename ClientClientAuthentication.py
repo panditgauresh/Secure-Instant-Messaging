@@ -2,8 +2,8 @@ from RequestAuthority import RequestAuthority
 import time
 from CryptoService import CryptoService
 import Utilities as util
-import Consts as c
 from PacketOrganiser import PacketOrganiser
+
 
 class ClientClientAuthentication(object):
     """
@@ -54,21 +54,3 @@ class ClientClientAuthentication(object):
         # send the hello message to the other client
         sock.sendto(pack_to_send, b_addr)
         return b_addr
-
-    def handle_auth_request_from_client(self, sock, server_dh_key, nonce):
-        """
-        handling Chatting requests from other client
-        :param sock:
-        :return:
-        """
-        pass
-
-    def handle_auth_response_from_client(self, sock):
-        """
-        handle response message for auth between clients
-        * TTB response from server
-
-        :param sock:
-        :return:
-        """
-        pass

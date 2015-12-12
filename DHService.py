@@ -4,6 +4,7 @@ import Utilities as util
 import Consts as c
 import hashlib
 
+
 class DiffieHellman(object):
     """
 
@@ -30,7 +31,6 @@ class DiffieHellman(object):
 
     def generate_public_key(self, private_key):
         """
-
         :return: g ** private_key % p
         """
         return pow(self.generator, private_key, self.prime)

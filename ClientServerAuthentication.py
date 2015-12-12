@@ -3,10 +3,9 @@ import time
 from CryptoService import CryptoService
 import Utilities as util
 import Consts as c
-import socket
-import sys
 from PacketOrganiser import PacketOrganiser
 import getpass
+
 
 class ClientServerAuthentication(object):
     """
@@ -41,7 +40,7 @@ class ClientServerAuthentication(object):
             # password = util.get_user_input(c.PASSWORD)
             password = getpass.getpass(c.PASSWORD)
             success = self._authenticate_with_server_helper(sock, self.username, password)
-        print("Login success!")
+        print(c.SUCCESS_LOGIN_MSG)
 
     def _authenticate_with_server_helper(self, sock, username, password):
         """
@@ -98,12 +97,15 @@ class ClientServerAuthentication(object):
         _, msg_sign = PacketOrganiser.process_packet(recv_msg)
 
         if msg_sign[0] == c.MSG_RESPONSE_WRONG_CR:
-            print("Wrong username/password pair!")
+            print(c.WRONG_CR_MSG)
+            return
+        elif msg_sign[0] == c.MSG_RESPONSE_USER_EXISTS:
+            print(c.USER_ALREADY_LOGIN_MSG)
             return
         else:
             msg, sign, _ = msg_sign
             if not self.crypto_service.rsa_verify(msg, sign):  # TODO for testing
-                raise Exception("Step 1 signature verification fail.")
+                raise Exception(c.STEP_ONE_FAIL_MSG)
             _, pub_enc_salt = PacketOrganiser.process_packet(msg)
             other_pub_key, enc_salt, _ = pub_enc_salt
             other_pub_key = int(other_pub_key)
@@ -134,12 +136,12 @@ class ClientServerAuthentication(object):
         dec_msg = self.crypto_service.sym_decrypt(self.dh_key, recv_msg)
         n, msg_parts = PacketOrganiser.process_packet(dec_msg)
         if n != nonce:
-            raise Exception("Step 3 nonce failed.")
+            raise Exception(c.STEP_THREE_NONCE_FAIL_MSG)
         auth_result = msg_parts[0]
         if auth_result == c.AUTH_SUCCESS:
             self.auth_success = True
         elif auth_result == c.MSG_RESPONSE_WRONG_CR:
-            print("Wrong username/password pair!")
+            print(c.WRONG_CR_MSG)
         return self.auth_success
 
 

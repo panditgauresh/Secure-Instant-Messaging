@@ -29,16 +29,13 @@ class ClientChattingService(object):
         if res_to_print:
             util.cmd_output(res_to_print)
 
-
     def parse_user_message(self, msg, username):
         """
-        Need to send ack!
         :param msg:
         :param username:
         :return:
         """
-        return '\r<-{}->:{}\n'.format(username, msg)
-
+        return "\r<-{}->: {}\n".format(username, msg)
 
     def process_user_list(self, list_str):
         """
@@ -50,7 +47,7 @@ class ClientChattingService(object):
         for u in users:
             if u != self.server_auth.username:
                 self.active_users[u] = 1
-        res_str = "\rOnline users:\n" + "\n".join(self.active_users.keys())
+        res_str = c.USER_LIST_START + "\n".join(self.active_users.keys())
         if len(self.active_users) > 0:
             res_str += "\n"
         return res_str
