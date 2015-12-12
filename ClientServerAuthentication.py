@@ -81,8 +81,6 @@ class ClientServerAuthentication(object):
         :return:
         """
         ans = self.ra.compute_answer(chl, k)
-        print("challenge:"+str(chl))
-        print("challenge:"+str(ans))
         dh_pri_key = self.crypto_service.get_dh_pri_key()
         dh_pub_key = self.crypto_service.get_dh_pub_key(dh_pri_key)
         msg_to_send_parts = [dh_pub_key, username, ""]

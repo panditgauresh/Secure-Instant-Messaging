@@ -64,6 +64,8 @@ class ClientRequestHandler(SocketServer.BaseRequestHandler):
             if rep is not None:
                 sys.stdout.flush()
                 sock.sendto(rep, self.client_address)
+            elif cur_auth.is_auth():
+                cur_auth.loginfailures += 1
         except socket.error:
             print(c.FAIL_MSG_FWD)
             return

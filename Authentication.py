@@ -29,6 +29,7 @@ class Authentication(object):
         self.username = ""
         self.pw_dict = pw_dict
         self.masksize = 0
+        self.loginfailures = 0
 
     def process_request(self, request, user_addr_dict):
         """
@@ -54,7 +55,7 @@ class Authentication(object):
         :return:
         """
         # sent a challenge to client
-        chl, ind, self.masksize = self.ra.get_challenge_tupple()
+        chl, ind, self.masksize = self.ra.get_challenge_tupple(self.loginfailures)
         self.stage = 1
         msg_to_send_parts = [chl, self.masksize, ind]
         msg_to_send = PacketOrganiser.prepare_packet(msg_to_send_parts, add_time=False)
@@ -112,6 +113,7 @@ class Authentication(object):
             msg = PacketOrganiser.prepare_packet(c.MSG_RESPONSE_WRONG_PW, nonce=n)
             enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
             self.stage = 0
+            self.loginfailures += 1
         else:
             msg = PacketOrganiser.prepare_packet(c.AUTH_SUCCESS, nonce=n)
             enc_msg = self.crypto_service.sym_encrypt(self.dh_key, msg)
