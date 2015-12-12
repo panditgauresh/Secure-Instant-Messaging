@@ -8,21 +8,23 @@ class RequestAuthority():
     def __init__(self):
         self.challengeComm = ChallengeComm.ChallengeComm()
 
-    def get_challenge_tupple(self):
+    def get_challenge_tupple(self, login_failures):
         """
         :return: The challenge tuple which is the hashed value of the challenge,
         the index of the challenge and the size of the mask.
         """
         chalTup = self.challengeComm.getNextChallenge()
-        masksize = self.get_mask_size()
+        masksize = self.get_mask_size(login_failures)
         masked = chalTup[0] & ((1<<masksize)-1)
         hash_object = hashlib.sha256(str(masked).encode('utf-8')).hexdigest()
         return (hash_object, chalTup[1], masksize)
 
-    def get_mask_size(self):
+    def get_mask_size(self, login_failures):
         """
         :return: the size of the mask which has to be anded with the challenge
         """
+        if login_failures >= 5:
+            return 20
         return 17
 
     def compute_answer(self, chl, k):
