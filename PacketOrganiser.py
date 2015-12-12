@@ -72,8 +72,6 @@ class PacketOrganiser(object):
         res_msg += PacketOrganiser.get_new_timestamp() if add_time else ""
         return res_msg
 
-    def getNonce(timestamp):
-        return timestamp.rsplit(',', 1)[1]
 
     @staticmethod
     def genRandomNumber(byte_size=c.NONCE_LEN):

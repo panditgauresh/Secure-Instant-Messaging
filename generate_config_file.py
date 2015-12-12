@@ -19,31 +19,14 @@ def generate_DF_param_file(path):
     :param path:
     :return:
     """
-    param = (generator_list[c.DH_GENERATOR_INDEX], get_prime(c.DH_PRIME_SIZE))
+    param = (c.DH_GENERATOR, get_prime(c.DH_PRIME_SIZE))
     util.save(path, param)
 
 
-def generate_and_save_config_file(path):
-    """
-
-    :param path:
-    :return:
-    """
-
-    # get parameters for DH
-    df_path = 'files/df_param'
-    prime = util.load_df_param_from_file(df_path)
-    g = 2
-    df_param = (g, prime)
-
-    # get user dict
-    user_dict = {}
-    # TODO generate user/password hashed and salt
-
 def generate_password_hash_dict(path):
-    pw_dict = {"user1" : "CS6740",
-               "user2" : "cs6740",
-               "admin" : "admin123"}
+    pw_dict = {"alice" : "ILoveNS201%",
+               "bob" : "Ns15Fall!@11",
+               "coco" : "CS674)Awesome"}
     pw_hash_dict = {}
     for u in pw_dict:
         salt = os.urandom(6)
@@ -52,8 +35,10 @@ def generate_password_hash_dict(path):
     util.save(path, pw_hash_dict, True)
 
 if __name__ == '__main__':
-    pw_path = "files/pw_hash_dict"
+    # generate dh param
+    # dh_path = c.DH_CONFIG_PATH
+    # generate_DF_param_file(dh_path)
+
+    pw_path = c.PW_HASH_PATH
     generate_password_hash_dict(pw_path)
-    # d = util.load_pickle_file(pw_path)
-    # print(d["admin"])
 

@@ -167,7 +167,7 @@ def run_client(server_ip, server_port):
     """
     global server_auth, user_auths, user_addr_dict, active_users
     g = 2
-    p = util.load_df_param_from_file("files/df_param")
+    p = util.load_df_param_from_file(c.DH_CONFIG_PATH)
     crypto_service = CryptoService(rsa_pub_path=c.PUB_KEY_PATH, p=p, g=g)
 
     server_addr = (server_ip, server_port)
@@ -303,7 +303,7 @@ def run_client(server_ip, server_port):
                         # a hack here (TYPE_MSG instead of RESPONSE_OK) to make the confirmation work
                         util.add_to_request_cache(request_cache, n, c.MSG_TYPE_MSG, cur_auth.dh_key, conf_msg, r_addr)
                         sock.sendto(enc_conf_msg, r_addr)
-            else: # TODO the r_addr not in user_addr_dict, this can be a TTB, a DDOS weakness?
+            else: # the r_addr not in user_addr_dict, this can be a TTB
                 # handle TTB from Alice
                 _, msg_ps = PacketOrganiser.process_packet(recv_msg)
                 signed_ttb, enc_inside_msg, _ = msg_ps
@@ -351,6 +351,8 @@ def run_client(server_ip, server_port):
             server_auth.logout(sock)
             sock.close()
             return
+        except:
+            pass
     t_listen.stop()
     t_listen.join()
     t_resend.stop()
@@ -360,9 +362,9 @@ def run_client(server_ip, server_port):
     sock.close()
 
 if __name__ == '__main__':
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('-sip', required=True)
-    # parser.add_argument('-sp', required=True, type=int)
-    # opts = parser.parse_args()
-    # run_client(opts.sip, opts.sp)
-    run_client('192.168.15.1', 9090)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-sip', required=True)
+    parser.add_argument('-sp', required=True, type=int)
+    opts = parser.parse_args()
+    run_client(opts.sip, opts.sp)
+    # run_client('192.168.1.9', 9090)

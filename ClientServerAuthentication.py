@@ -38,8 +38,8 @@ class ClientServerAuthentication(object):
         success = False
         while not success:
             self.username = util.get_user_input(c.USERNAME)
-            password = util.get_user_input(c.PASSWORD)
-            # password = getpass.getpass("Password:")
+            # password = util.get_user_input(c.PASSWORD)
+            password = getpass.getpass("Password:")
             success = self._authenticate_with_server_helper(sock, self.username, password)
         print("Login success!")
 
